@@ -14,7 +14,7 @@ output:
 
 # Estimation of "a" per-protocol effect for GIVE-MOVE (there are several) 
 
-Based on: 
+Based primarily on: 
 Guidelines for estimating causal effects in pragmatic randomized trials
 Eleanor J. Murray1, Sonja A. Swanson2, Miguel A. Hernán
 
@@ -63,8 +63,12 @@ library(writexl)
 library(lme4)
 library(msm)
 library(sjPlot) # for tab_model
-library(jtools) # for summ()
+library(jtools) # for summ() and plot_summs
+library(broom.mixed) # for plot_summs
 library(sandwich) # for robust sandwich SE
+library(ipw) # IPW
+library(survey) # survey design for IPW
+library(car) # VIF
 ```
 
 # Load Data
@@ -74,8 +78,9 @@ fup <- read_csv("/Users/amstutzal/Documents/GitHub/GIVE-MOVE/data/fup.csv")
 
 ```
 
-# Explore Data and Primary ITT analysis
-```{r}
+# Explore data, identify primary model variables and run primary ITT analysis
+```{r message=FALSE, warning=FALSE}
+names(analysis)
 ## protocol deviation variables
 # table(analysis$arm, analysis$prot_dev1) #All: not having the decision visit within six months (24 weeks) after randomization
 # table(analysis$arm, analysis$prot_dev2) #Cont P: not receiving a VL although was supposed to have one
@@ -83,12 +88,28 @@ fup <- read_csv("/Users/amstutzal/Documents/GitHub/GIVE-MOVE/data/fup.csv")
 # table(analysis$arm, analysis$prot_dev4) #All: Not having a VL result within the 9-month window and not having reached the primary endpoint before or at the 9-month visit
 # table(analysis$arm, analysis$prot_dev5) #Cont P: GRT although they were not supposed to have one
 
-## define non-adherence to treatment strategy/protocol
+## define non-adherence to treatment strategy/protocol 1: As per protocol
 analysis <- analysis %>%
   mutate(ppadh = case_when(prot_dev1 == 1 | prot_dev2 == 1
                            | prot_dev3 == 1 | prot_dev4 == 1
-                           | prot_dev5 == 1 ~ 1,
-                           TRUE ~ 0))
+                           | prot_dev5 == 1 ~ 0,
+                           TRUE ~ 1))
+table(analysis$ppadh, useNA = "always")
+table(analysis$arm, analysis$ppadh, useNA = "always")
+# adherence rate, by arm
+round(100*prop.table(table(analysis$arm, analysis$ppadh),1),1) # 88% adherence in cont / 79% adherence in int
+
+## define non-adherence to treatment strategy/protocol 2: Without LTFU
+analysis <- analysis %>%
+  mutate(ppadh2 = case_when(prot_dev1 == 1 | prot_dev2 == 1
+                           | prot_dev3 == 1
+                           | prot_dev5 == 1 ~ 0,
+                           TRUE ~ 1))
+table(analysis$ppadh2, useNA = "always")
+table(analysis$arm, analysis$ppadh2, useNA = "always")
+# adherence rate, by arm
+round(100*prop.table(table(analysis$arm, analysis$ppadh2),1),1) #90% adherence in cont / 81% adherence in int
+
 # table(analysis$arm, analysis$ppadh, useNA = "always") #adherence to protocol variable
 # table(analysis$arm, useNA = "always") #arm variable
 # table(analysis$arm, analysis$endpoint, useNA = "always") #primary outcome variable // no missing
@@ -99,23 +120,473 @@ analysis <- analysis %>%
 ## ITT analysis, adjusted for stratification variables
 ITT <- analysis %>% 
   glm(endpoint ~ arm + agegr_der + stsite_der2 + regimen_der2,
-              family = binomial(link = "logit"), data=.)
-tab_model(ITT)
+              family = "binomial", data=.)
 summ(ITT, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
 ## ITT analysis, unadjusted
-ITT_unad <- analysis %>% 
+ITT_unadj <- analysis %>% 
   glm(endpoint ~ arm ,
       # + agegr_der
       # + stsite_der2
       # + regimen_der2,
-              family = binomial(link = "logit"), data=.)
-tab_model(ITT_unad)
-summ(ITT_unad, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
+              family = "binomial", data=.)
+summ(ITT_unadj, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
 
 ```
+
 # TABLE characteristics by arm and by adherence to treatment strategy
 
 ```{r}
+# Only relevant site variable in current dataset: table(analysis$stsite)
+# Currently omitted: "Immunosuppression" (derived), "Full orphan" (derived), "ART regimen"
+
+vars.list <- c("arm","ppadh2","agegr_der","stsite_der2","regimen_der2","sex","scrvl","whocur","cd4count","hepbres","wt","time_on_art_yrs","time_on_curr_art_yrs","regcursat","missyn","miss2dyn","care","fathervit","mothervit","travtim","travcost","travmod", "stsite")
+
+df_pp <- analysis[,colnames(analysis)%in%vars.list]
+df_pp <- df_pp[,match(vars.list,colnames(df_pp))]
+
+colnames(df_pp) <- vars.list <- c("ARM","Adherent to treatment strategy","Age","Country","ART core agent","Sex","Viral load prior to enrolment","Clinical WHO stage", "CD4 cell count", "Hepatitis B surface antigen", "Weight", "Time since initiation of first documented ART regimen (years)", "Time since initiation of current ART regimen (years)", "Satisfaction with current regimen (self-reported)", "Missed ≥1 dose of ART over the past 4 weeks (self-reported)", "No drug intake for 2 days or more (self-reported)", "Primary caregiver", "Vital state of mother", "Vital state of father", "Travel time to healthcare facility (one way; minutes)", "Cost of travel to healthcare facility (one way; USD)", "Main mode of travel to healthcare facility", "Site")
+
+char_vars <- c("Clinical WHO stage","Main mode of travel to healthcare facility", "Site")
+# Convert character variables to factors
+df_pp <- df_pp %>%
+  mutate(across(all_of(char_vars), factor))
+# Create ordinal factors
+analysis$regcursat <- ordered(analysis$regcursat, 
+                                  levels = c("Very dissatisfied", "Somewhat dissatisfied", 
+                                             "Neutral", "Somewhat satisfied", "Very satisfied"))
+analysis$whocur <- ordered(analysis$whocur, 
+                                  levels = c("T1", "T2", 
+                                             "T3", "T4"))
+
+# all participants, by arm
+table_pp <- CreateTableOne(data = df_pp, vars = vars.list[!vars.list %in% c("Adherent to treatment strategy", "ARM")], strata = "ARM", includeNA = TRUE, test = TRUE, addOverall = TRUE)
+capture.output(table_pp <- print(table_pp, nonnormal = vars.list,catDigits = 1,SMD = TRUE,showAllLevels = TRUE,test = TRUE,printToggle = FALSE,missing = TRUE))
+#print
+knitr::kable(table_pp, caption = "Baseline characteristics, by arm")
+
+# all participants, by adherence
+table_pp_adh <- CreateTableOne(data = df_pp, vars = vars.list[!vars.list %in% c("Adherent to treatment strategy", "ARM")], strata = "Adherent to treatment strategy", includeNA = TRUE, test = TRUE, addOverall = TRUE)
+capture.output(table_pp_adh <- print(table_pp_adh, nonnormal = vars.list,catDigits = 1,SMD = TRUE,showAllLevels = TRUE,test = TRUE,printToggle = FALSE,missing = TRUE))
+#print
+knitr::kable(table_pp_adh, caption = "Baseline characteristics, by adherence")
+
+# intervention arm only
+df_pp_int <- df_pp %>%
+  filter(ARM == 1)
+table_pp_int <- CreateTableOne(data = df_pp_int, vars = vars.list[!vars.list %in% c("Adherent to treatment strategy", "ARM")], strata = "Adherent to treatment strategy", includeNA = TRUE, test = TRUE, addOverall = TRUE)
+capture.output(table_pp_int <- print(table_pp_int, nonnormal = vars.list,catDigits = 1,SMD = TRUE,showAllLevels = TRUE,test = TRUE,printToggle = FALSE,missing = TRUE))
+
+#print
+knitr::kable(table_pp_int,caption = "Baseline characteristics of intervention participants, by adherence to treatment strategy")
+
+# control arm only 
+df_pp_cont <- df_pp %>%
+  filter(ARM == 0)
+table_pp_cont <- CreateTableOne(data = df_pp_cont, vars = vars.list[!vars.list %in% c("Adherent to treatment strategy", "ARM")], strata = "Adherent to treatment strategy", includeNA = TRUE, test = TRUE, addOverall = TRUE)
+capture.output(table_pp_cont <- print(table_pp_cont, nonnormal = vars.list,catDigits = 1,SMD = TRUE,showAllLevels = TRUE,test = TRUE,printToggle = FALSE,missing = TRUE))
+
+#print
+knitr::kable(table_pp_cont, caption = "Baseline characteristics of control participants, by adherence to treatment strategy")
+
+# overall tables, by arm. a) Intervention non-adherers to Cont population (only adherers), b) Cont non-adherers to Int pop (only adherers)
+# a) Intervention non-adherers to Cont population (only adherers)
+table_pp_int <- CreateTableOne(data = df_pp_int, vars = vars.list[!vars.list %in% c("Adherent to treatment strategy", "ARM")], strata = "Adherent to treatment strategy", includeNA = TRUE, test = FALSE, addOverall = FALSE)
+capture.output(table_pp_int <- print(table_pp_int, nonnormal = vars.list,catDigits = 1,SMD = TRUE,showAllLevels = TRUE,test = FALSE,printToggle = FALSE,missing = FALSE))
+
+df_pp_cont_adh <- df_pp_cont %>%
+  filter(`Adherent to treatment strategy` == 1)
+table_pp_cont_adh <- CreateTableOne(data = df_pp_cont_adh, vars = vars.list[!vars.list %in% c("Adherent to treatment strategy", "ARM")], includeNA = TRUE, test = FALSE, addOverall = FALSE)
+capture.output(table_pp_cont_adh <- print(table_pp_cont_adh, nonnormal = vars.list,catDigits = 1,SMD = TRUE,showAllLevels = TRUE,test = FALSE,printToggle = FALSE,missing = FALSE))
+
+#print both alongside
+table_pp_overall_int_nonadh <- cbind(table_pp_cont_adh, table_pp_int)
+knitr::kable(table_pp_overall_int_nonadh, caption = "Baseline characteristics, control group (only adherers) and intervention participants by adherence status")
+
+# b) Cont non-adherers to Int pop (only adherers)
+table_pp_cont <- CreateTableOne(data = df_pp_cont, vars = vars.list[!vars.list %in% c("Adherent to treatment strategy", "ARM")], strata = "Adherent to treatment strategy", includeNA = TRUE, test = FALSE, addOverall = FALSE)
+capture.output(table_pp_cont <- print(table_pp_cont, nonnormal = vars.list,catDigits = 1,SMD = TRUE,showAllLevels = TRUE,test = FALSE,printToggle = FALSE,missing = FALSE))
+
+df_pp_int_adh <- df_pp_int %>%
+  filter(`Adherent to treatment strategy` == 1)
+table_pp_int_adh <- CreateTableOne(data = df_pp_int_adh, vars = vars.list[!vars.list %in% c("Adherent to treatment strategy", "ARM")], includeNA = TRUE, test = FALSE, addOverall = FALSE)
+capture.output(table_pp_int_adh <- print(table_pp_int_adh, nonnormal = vars.list,catDigits = 1,SMD = TRUE,showAllLevels = TRUE,test = FALSE,printToggle = FALSE,missing = FALSE))
+
+#print both alongside
+table_pp_overall_cont_nonadh <- cbind(table_pp_int_adh, table_pp_cont)
+knitr::kable(table_pp_overall_cont_nonadh, caption = "Baseline characteristics, intervention group (only adherers) and control participants by adherence status")
+
+```
+
+## Investigate further, esp. re predictors for non-adherence to protocol
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+# Convert character variables to factors
+char_vars <- c("agegr_der", "stsite_der2" , "regimen_der2" , "sex" , "whocur" , "hepbres" , "regcursat" , "missyn" , "miss2dyn" , "care" , "fathervit" , "mothervit" , "travmod" , "stsite")
+analysis <- analysis %>%
+  mutate(across(all_of(char_vars), factor))
+
+# Convert numeric variables to integer
+num_vars <- c("scrvl","cd4count", "wt", "time_on_art_yrs", "time_on_curr_art_yrs", "travtim", "travcost")
+analysis <- analysis %>%
+  mutate(across(all_of(num_vars), as.integer))
+
+# multivariable logistic regression model, overall, on adherence
+model <- analysis %>% 
+  glm(ppadh2 ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl + whocur 
+               + cd4count + hepbres + wt + time_on_art_yrs + time_on_curr_art_yrs 
+               + regcursat 
+               # + missyn 
+               # + miss2dyn 
+               + care + fathervit + mothervit 
+               + travtim + travcost + travmod 
+               + stsite,
+              family = "binomial", data=.)
+
+# Extract the coefficients, convert to ORs, round them, extract their standard errors, and calculate 95% CI
+coefficients <- coef(summary(model))
+odds_ratios <- exp(coefficients[, 1])
+odds_ratios_rounded <- round(odds_ratios, digits = 2)
+standard_errors <- coefficients[, 2]
+lower_ci <- exp(odds_ratios - 1.96 * standard_errors)
+upper_ci <- exp(odds_ratios + 1.96 * standard_errors)
+
+# Combine the adjusted Odds Ratios and Confidence Intervals into a data frame
+odds_ci_data <- data.frame(odds_ratios_rounded = odds_ratios_rounded,
+                           lower_ci = lower_ci,
+                           upper_ci = upper_ci)
+
+# Print the data frame with adjusted Odds Ratios and Confidence Intervals
+knitr::kable(odds_ci_data, caption = "Baseline characteristics predicting adherence to GIVE-MOVE protocol,  odds ratios with 96% confidence intervals, adjusted for all other variables")
+
+# # By intervention arm
+# analysis_int <- analysis %>%
+#   filter(arm == 1)
+# model <- analysis_int %>% 
+#   glm(ppadh ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl + whocur 
+#                + cd4count + hepbres + wt + time_on_art_yrs + time_on_curr_art_yrs 
+#                + regcursat 
+#                # + missyn 
+#                # + miss2dyn 
+#                + care + fathervit + mothervit 
+#                + travtim + travcost + travmod 
+#                + stsite,
+#               family = "binomial", data=.)
+# 
+# # Extract the coefficients, convert to ORs, round them, extract their standard errors, and calculate 95% CI
+# coefficients <- coef(summary(model))
+# odds_ratios <- exp(coefficients[, 1])
+# odds_ratios_rounded <- round(odds_ratios, digits = 2)
+# standard_errors <- coefficients[, 2]
+# lower_ci <- exp(odds_ratios - 1.96 * standard_errors)
+# upper_ci <- exp(odds_ratios + 1.96 * standard_errors)
+# 
+# # Combine the adjusted Odds Ratios and Confidence Intervals into a data frame
+# odds_ci_data <- data.frame(odds_ratios_rounded = odds_ratios_rounded,
+#                            lower_ci = lower_ci,
+#                            upper_ci = upper_ci)
+# 
+# # Print the data frame with adjusted Odds Ratios and Confidence Intervals
+# print(odds_ci_data)
+# knitr::kable(odds_ci_data, caption = "In Intervention only: Baseline characteristics predicting adherence to GIVE-MOVE protocol,  odds ratios with 96% confidence intervals, adjusted for all other variables")
+
+```
+
+# Inverse Probability Weighting
+
+We will estimate inverse probability weights to generate a pseudo population, in which covariates no longer predict adherence, allowing adherence to appear to be randomized with respect to the observed covariate distribution. So, in this pseudo-population everyone either adheres to treatment or not. 
+
+We can do this manually (using logistic regression models to predict the probability (=propensity) of treatment and then calculate the (un)stabilized weights) or estimate the weights on the PP population using the ipw package: https://cran.r-project.org/web/packages/ipw/index.html
+The package entails functions to estimate the probability to receive the observed treatment, based on individual characteristics. "ipwpoint" function is the function for point treatment situations. 
+Can calculate unstabilized and stabilized weights. Unstabilized weights are based on the inverse of the probability of receiving the observed treatment assignment. Stabilized weights take into account the fact that the estimated probabilities used in the calculation of unstabilized weights might not be very accurate, especially when treatment assignment is highly imbalanced or when the estimated probabilities are close to zero. Stabilized weights aim to reduce the variability and potential instability caused by extreme probabilities. 
+We will use the cluster-version of robust sandwich SE to correctly estimate the SE of the treatment effect estimate since there are multiple observations per participant.
+
+```{r echo=TRUE, warning=FALSE}
+# covariates and adherent datasets
+df_ipw <- analysis %>% # adherent definition 1 (with LTFU as non-adherent)
+  select("arm","scrno","endpoint","ppadh","ppadh2","agegr_der","stsite_der2","regimen_der2","sex","scrvl",
+               "whocur","cd4count","hepbres","wt","time_on_art_yrs","time_on_curr_art_yrs",
+               "regcursat","care","fathervit","mothervit","travtim","travcost","travmod", "stsite") %>% 
+  filter(ppadh == 1)
+table(df_ipw$arm, df_ipw$ppadh) # arm becomes our adherent exposure=treatment
+
+df_ipw2 <- analysis %>% # adherent definition 2 (without LTFU as non-adherent)
+  select("arm","scrno","endpoint","ppadh","ppadh2","agegr_der","stsite_der2","regimen_der2","sex","scrvl",
+               "whocur","cd4count","hepbres","wt","time_on_art_yrs","time_on_curr_art_yrs",
+               "regcursat","care","fathervit","mothervit","travtim","travcost","travmod", "stsite") %>% 
+  filter(ppadh2 == 1)
+table(df_ipw2$arm, df_ipw2$ppadh2) # arm becomes our adherent exposure=treatment
+
+# adjusted and unadjusted PP model // definition 1
+PP_adj <- df_ipw %>% 
+  glm(endpoint ~ arm + agegr_der + stsite_der2 + regimen_der2,
+              family = "binomial", data=.)
+summ(PP_adj, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
+PP_unadj <- df_ipw %>% 
+  glm(endpoint ~ arm,
+              family = "binomial", data=.)
+summ(PP_unadj, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
+# adjusted and unadjusted PP model // definition 2
+PP_adj2 <- df_ipw2 %>% 
+  glm(endpoint ~ arm + agegr_der + stsite_der2 + regimen_der2,
+              family = "binomial", data=.)
+summ(PP_adj2, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
+PP_unadj2 <- df_ipw2 %>% 
+  glm(endpoint ~ arm,
+              family = "binomial", data=.)
+summ(PP_unadj2, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
+
+
+### Now, use IPW instead
+
+# with stabilized weights // definition 1
+ipw_sw <- ipwpoint(exposure = arm,
+  family = "binomial",  # arm is binary
+  link = "logit",
+  numerator = ~ 1,
+  denominator = ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl 
+  # + whocur 
+  + wt + time_on_art_yrs + time_on_curr_art_yrs + fathervit + mothervit + travtim + travcost 
+  # + travmod 
+  # + stsite
+  ,
+  data = as.data.frame(df_ipw))
+
+summary(ipw_sw$ipw.weights)
+ipwplot(weights = ipw_sw$ipw.weights, logscale = FALSE, main = "Stabilized weights", xlim = c(0, 8))
+df_ipw$sw <- ipw_sw$ipw.weights
+
+# use the weights in the outcome model
+PP_ipw_sw <- df_ipw %>% 
+  glm(endpoint ~ arm, weights = sw,
+              family = "binomial", data=.)
+summ(PP_ipw_sw, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
+
+# with unstabilized weights // definition 1
+ipw_usw <- ipwpoint(exposure = arm,
+  family = "binomial",  # arm is binary
+  link = "logit",
+  numerator = NULL,
+  denominator = ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl 
+  # + whocur 
+  + wt + time_on_art_yrs + time_on_curr_art_yrs + fathervit + mothervit + travtim + travcost 
+  # + travmod 
+  # + stsite
+  ,
+  data = as.data.frame(df_ipw))
+
+summary(ipw_usw$ipw.weights)
+ipwplot(weights = ipw_usw$ipw.weights, logscale = FALSE, main = "Unstabilized weights", xlim = c(0, 8))
+df_ipw$usw <- ipw_usw$ipw.weights
+
+# use the weights in the outcome model
+PP_ipw_usw <- df_ipw %>% 
+  glm(endpoint ~ arm, weights = usw,
+              family = "binomial", data=.)
+summ(PP_ipw_usw, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
+
+# with stabilized weights // definition 2
+ipw_sw2 <- ipwpoint(exposure = arm,
+  family = "binomial",  # arm is binary
+  link = "logit",
+  numerator = ~ 1,
+  denominator = ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl 
+  # + whocur 
+  + wt + time_on_art_yrs + time_on_curr_art_yrs + fathervit + mothervit + travtim + travcost 
+  # + travmod 
+  # + stsite
+  ,
+  data = as.data.frame(df_ipw2))
+
+summary(ipw_sw2$ipw.weights)
+ipwplot(weights = ipw_sw2$ipw.weights, logscale = FALSE, main = "Stabilized weights", xlim = c(0, 8))
+df_ipw2$sw <- ipw_sw2$ipw.weights
+
+# use the weights in the outcome model
+PP_ipw_sw2 <- df_ipw2 %>% 
+  glm(endpoint ~ arm, weights = sw,
+              family = "binomial", data=.)
+summ(PP_ipw_sw2, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
+
+# with unstabilized weights // definition 2
+ipw_usw2 <- ipwpoint(exposure = arm,
+  family = "binomial",  # arm is binary
+  link = "logit",
+  numerator = NULL,
+  denominator = ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl 
+  # + whocur 
+  + wt + time_on_art_yrs + time_on_curr_art_yrs + fathervit + mothervit + travtim + travcost 
+  # + travmod 
+  # + stsite
+  ,
+  data = as.data.frame(df_ipw2))
+
+summary(ipw_usw2$ipw.weights)
+ipwplot(weights = ipw_usw2$ipw.weights, logscale = FALSE, main = "Unstabilized weights", xlim = c(0, 8))
+df_ipw2$usw <- ipw_usw2$ipw.weights
+
+# use the weights in the outcome model
+PP_ipw_usw2 <- df_ipw2 %>% 
+  glm(endpoint ~ arm, weights = usw,
+              family = "binomial", data=.)
+summ(PP_ipw_usw2, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
+
+
+
+
+### check model and ipw weights
+## check multicollinearity of the model used in ipwpoint:
+ipw.model <- glm(arm ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl + whocur + wt + time_on_art_yrs + time_on_curr_art_yrs + fathervit + mothervit + travtim + travcost + travmod 
+                 # + stsite
+              , family = "binomial", data=df_ipw2)
+summ(ipw.model, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
+
+# ipw.model <- glm(arm ~ agegr_der 
+#                 + stsite_der2 
+#                 + regimen_der2 
+#                  + sex 
+#                 + scrvl 
+#                 # + cd4count 
+#                 # + hepbres 
+#                  + wt 
+#                 # + time_on_art_yrs 
+#                  + time_on_curr_art_yrs 
+#                 #  + regcursat 
+#                  + whocur
+#                 # + missyn 
+#                 # + miss2dyn 
+#                 # + care 
+#                  + fathervit 
+#                  + mothervit 
+#                  + travtim 
+#                  + travcost 
+#                  + travmod 
+#                 # + stsite
+#               , family = "binomial", data=df_ipw)
+# summ(ipw.model, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
+
+# Calculate Variance Inflation Factor values
+vif_values <- vif(ipw.model) # VIF = 1 / (1 - R²). "There are aliased coefficients in the model" = perfect multicollinearity // VIF values exceeding 5 or 10 are often considered indicative of significant multicollinearity
+print(vif_values)
+
+## check the summary of the unstabilized weights:
+round(summary(df_ipw2$usw), 3)
+# Similarly, we can check the summary of the stabilized weights:
+round(summary(df_ipw2$sw), 3)
+# We can see that the mean of stabilized weights is 1, while it is 1.9 for unstabilized weights. For both unstabilized and stabilized weights, it seems there are no extreme weights. So, no truncation needed.
+
+## check the distribution of the covariates by the treatment status on the pseudo population. The standardized mean difference (SMD) less than 0.10 is often recommended as a good covariate balancing (add ref, e.g. Zhongheng Zhang, Hwa Jung Kim, Guillaume Lonjon, Yibing Zhu, et al. Balance diagnostics after propensity score matching. Annals of translational medicine, 7(1), 2019.). To do this, now we will create a survey design using the weights:
+
+# Design with unstabilized weight
+design.unstab <- svydesign(ids = ~scrno, weights = ~usw, data = df_ipw2)
+# Design with stabilized weight
+design.stab <- svydesign(ids = ~scrno, weights = ~sw, data = df_ipw2)
+
+# Then we will use the tableone package to see covariate balancing. We will do it for the unstabilized weights first:
+
+# Covariates
+covariates <- c("agegr_der","stsite_der2","regimen_der2",
+                 "sex","scrvl",
+                # "whocur",
+                # + cd4count 
+                # + hepbres 
+                  "wt",
+                  "time_on_art_yrs", 
+                  "time_on_curr_art_yrs" ,
+                #  + regcursat 
+                # + missyn 
+                # + miss2dyn 
+                # + care 
+                  "fathervit","mothervit", 
+                  "travtim","travcost"
+                # , "travmod"
+                 # , "stsite" 
+                )
+# Table stratified by treatment status
+tab.unstab <- svyCreateTableOne(vars = covariates, strata = "arm", data = design.unstab, test = F)
+print(tab.unstab, smd = T)
+
+tab.stab <- svyCreateTableOne(vars = covariates, strata = "arm", data = design.stab, test = F)
+print(tab.stab, smd = T)
+
+```
+
+## As a "sensitivity" analysis (and for fun): add an instrumental variable analysis (even though assumptions probably do not hold)
+We will use Two-stage least square (2SLS) with randomization as the instrumental variable and "adhering to the protocol" as the treatment variable.
+In the first stage, the relation between treatment assignment and treatment adherence is estimated.
+In the second stage, the effect of the GRT-strategy on the outcome is estimated, using the predicted values from the first stage as an independent variable in a logistic regression model.
+
+```{r}
+# Stage 1 of 2SLS // use entire dataset !
+table(analysis$ppadh2,analysis$arm)
+s1 <- glm(ppadh2 ~ arm 
+          + agegr_der + stsite_der2 + regimen_der2 
+          + sex + scrvl 
+          + whocur 
+          + wt 
+          + time_on_art_yrs + time_on_curr_art_yrs 
+          + fathervit + mothervit 
+          + travtim + travcost 
+          + travmod 
+          + stsite
+          , data = analysis, family = binomial("logit"))
+analysis$ppadh.new <- NA
+analysis$ppadh.new <- predict(s1, type = "response")
+
+# In the second stage, we will fit the outcome model (the logistic regression) with the predicted treatment from the first stage and the confounders. We should use the robust sandwich SE to estimate the SE of the treatment effect correctly to account for the clustering effect of multiple observations per participant (Cameron AC, Miller DL. A practitioner's guide to cluster-robust inference. J Hum Resour. 2015;50(2):317-372.)
+
+# Stage 2 of 2SLS
+PP_iv <- analysis %>% 
+  glm(endpoint ~ ppadh.new
+                 + agegr_der + stsite_der2 + regimen_der2 
+                + sex + scrvl
+                + whocur
+                + wt
+                + time_on_art_yrs + time_on_curr_art_yrs
+                + fathervit + mothervit
+                + travtim + travcost 
+                + travmod
+                + stsite
+                ,
+              family = "binomial", data=.)
+summ(PP_iv, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
+
+# as expected, results seems biased
+
+```
+
+# Results Comparison
+Now, we will compare the odds ratios from all models.
+```{r echo=TRUE, warning=FALSE}
+summ(ITT, exp = T, confint = T, model.info = F, model.fit = F, digits = 3, title = "iwi")
+summ(ITT_unadj, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
+
+summ(PP_adj, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
+summ(PP_unadj, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
+summ(PP_adj2, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
+summ(PP_unadj2, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
+
+summ(PP_ipw_sw, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
+summ(PP_ipw_usw, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
+
+summ(PP_ipw_sw2, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
+summ(PP_ipw_usw2, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
+
+plot_summs(ITT, ITT_unadj, PP_adj, PP_unadj, PP_ipw_sw, PP_ipw_usw,
+           scale = F,
+           coefs = c("arm"),
+           exp = T,
+           robust = list(FALSE, FALSE, FALSE, FALSE, "HC0", "HC0"),
+           legend.title = "Method / Per Protocol Definition 1",
+           model.names = c("Baseline-adjusted ITT", "unadjusted ITT", "Baseline-adjusted PP", "unadjusted PP","IPW-PP-Stabilized","IPW-PP-Unstabilized"))
+
+plot_summs(ITT, ITT_unadj, PP_adj2, PP_unadj2, PP_ipw_sw2, PP_ipw_usw2,
+           scale = F,
+           coefs = c("arm"),
+           exp = T,
+           robust = list(FALSE, FALSE, FALSE, FALSE, "HC0", "HC0"),
+           legend.title = "Method / Per Protocol Definition 2",
+           model.names = c("Baseline-adjusted ITT", "unadjusted ITT", "Baseline-adjusted PP", "unadjusted PP","IPW-PP-Stabilized","IPW-PP-Unstabilized"))
+
 
 ```
 
