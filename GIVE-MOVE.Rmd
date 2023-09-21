@@ -14,9 +14,8 @@ output:
 
 # Estimation of "a" per-protocol effect for GIVE-MOVE (there are several) 
 
-Based primarily o: 
-Guidelines for estimating causal effects in pragmatic randomized trials
-Eleanor J. Murray1, Sonja A. Swanson2, Miguel A. Hernán
+Based primarily on: 
+Guidelines for estimating causal effects in pragmatic randomized trials by Murray et al.
 
 Causal estimand of interest: The effect of receiving the assigned treatment strategies
 = The effect of successfully receiving GRT-guided strategy in intervention and VL-guided strategy in control
@@ -32,26 +31,23 @@ Intervention group:
 1) Participants not receiving a GRT although they were supposed to have one: 3 participants
 2) Participants not having the decision visit within six months (24 weeks) after randomization: 26 participants
 - of which LTFU: XXX ?
-- otherwise: missing/delayed GRT (that's already part of number 1?! why not summarized under 2?)
+- otherwise: missing/delayed GRT (but that's already part of number 1?!) or missing/delayed visit?
 
 Control group:
 1) Participants receiving a GRT although they were not supposed to have one: 3 participants
 2) Participants not receiving a VL although they were supposed to have one: 1 participant
 3) Participants not having the decision visit within six months (24 weeks) after randomization: 10 participants
 - of which LTFU: XXX ?
-- otherwise: missing/delayed VL (that's already part of number 2?! why not summarized under 3?)
+- otherwise: missing/delayed VL (that's already part of number 2?!)
 
-Note: Not having a VL result within the 9-month window and not having reached the primary endpoint before or at the 9-month visit (13 participants) is part of the primary endpoint/estimand. If not part of primary causal estimand, then use multiple imputation or IPW for LTFU.
+Note: Not having a VL result within the 9-month window (and not having reached the primary endpoint before or at the 9-month visit (13 participants)) is already part of the primary endpoint/estimand (if it would not be part of primary causal estimand, then use multiple imputation or IPW for LTFU)
 
 Define DAG: See slide in folder "DAG"
 
 Define method used:
 Because a point intervention is delivered at or close to the time of randomization, only covariates at or before the time of randomization can influence adherence to a point intervention. To validly estimate the per-protocol effect, baseline variables which predict adherence and are prognostic for the outcome need to be accounted for, either through direct adjustment or via an instrumental variable analysis.
 Inverse probability and standardization allow calculation of absolute risks in the study population and preserve the marginal (unconditional) interpretation and are therefore preferable for direct adjustment. 
-Other commonly used adjustment methods, like outcome regression and propensity score adjustment or matching, typically make strong assumptions about no effect heterogeneity (rely on the assumption of effect homogeneity across levels of all covariates), and do not easily yield unconditional absolute risks.
-(as a exploratory analysis, we may add an instrumental variable analyis, however, this analysis would rely on stronger assumptions and harder to interpret)
-Since point exposures happen only once, they typically require only control for baseline confounding. (However, estimating causal effects of point exposures on time to event may still require adjustment for time-varying confounders of loss to follow-up and the outcome.)
-
+Other commonly used adjustment methods, like propensity score adjustment or matching or instrumental variable, typically make strong assumptions about no effect heterogeneity (rely on the assumption of effect homogeneity across levels of all covariates), among others, and do not easily yield unconditional absolute risks.
 
 # Load packages
 ```{r load packages, echo=TRUE, message=FALSE, warning=FALSE}
@@ -82,11 +78,11 @@ fup <- read_csv("/Users/amstutzal/Documents/GitHub/GIVE-MOVE/data/fup.csv")
 ```{r message=FALSE, warning=FALSE}
 names(analysis)
 ## protocol deviation variables
-# table(analysis$arm, analysis$prot_dev1) #All: not having the decision visit within six months (24 weeks) after randomization
-# table(analysis$arm, analysis$prot_dev2) #Cont P: not receiving a VL although was supposed to have one
-# table(analysis$arm, analysis$prot_dev3) #Int P: Not receiving a GRT although they were supposed to have one
-# table(analysis$arm, analysis$prot_dev4) #All: Not having a VL result within the 9-month window and not having reached the primary endpoint before or at the 9-month visit
-# table(analysis$arm, analysis$prot_dev5) #Cont P: GRT although they were not supposed to have one
+# table(analysis$arm, analysis$prot_dev1) #Both: not having the decision visit within six months (24 weeks) after randomization
+# table(analysis$arm, analysis$prot_dev2) #Cont: not receiving a VL although was supposed to have one
+# table(analysis$arm, analysis$prot_dev3) #Int: Not receiving a GRT although they were supposed to have one
+# table(analysis$arm, analysis$prot_dev4) #Both: Not having a VL result within the 9-month window and not having reached the primary endpoint before or at the 9-month visit
+# table(analysis$arm, analysis$prot_dev5) #Cont: GRT although they were not supposed to have one
 
 ## define non-adherence to treatment strategy/protocol 1: As per protocol
 analysis <- analysis %>%
@@ -232,11 +228,11 @@ analysis <- analysis %>%
 
 # multivariable logistic regression model, overall, on adherence
 model <- analysis %>% 
-  glm(ppadh2 ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl + whocur 
+  glm(ppadh ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl + whocur 
                + cd4count + hepbres + wt + time_on_art_yrs + time_on_curr_art_yrs 
                + regcursat 
-               # + missyn 
-               # + miss2dyn 
+               #+ missyn 
+               #+ miss2dyn 
                + care + fathervit + mothervit 
                + travtim + travcost + travmod 
                + stsite,
@@ -258,47 +254,16 @@ odds_ci_data <- data.frame(odds_ratios_rounded = odds_ratios_rounded,
 # Print the data frame with adjusted Odds Ratios and Confidence Intervals
 knitr::kable(odds_ci_data, caption = "Baseline characteristics predicting adherence to GIVE-MOVE protocol,  odds ratios with 96% confidence intervals, adjusted for all other variables")
 
-# # By intervention arm
-# analysis_int <- analysis %>%
-#   filter(arm == 1)
-# model <- analysis_int %>% 
-#   glm(ppadh ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl + whocur 
-#                + cd4count + hepbres + wt + time_on_art_yrs + time_on_curr_art_yrs 
-#                + regcursat 
-#                # + missyn 
-#                # + miss2dyn 
-#                + care + fathervit + mothervit 
-#                + travtim + travcost + travmod 
-#                + stsite,
-#               family = "binomial", data=.)
-# 
-# # Extract the coefficients, convert to ORs, round them, extract their standard errors, and calculate 95% CI
-# coefficients <- coef(summary(model))
-# odds_ratios <- exp(coefficients[, 1])
-# odds_ratios_rounded <- round(odds_ratios, digits = 2)
-# standard_errors <- coefficients[, 2]
-# lower_ci <- exp(odds_ratios - 1.96 * standard_errors)
-# upper_ci <- exp(odds_ratios + 1.96 * standard_errors)
-# 
-# # Combine the adjusted Odds Ratios and Confidence Intervals into a data frame
-# odds_ci_data <- data.frame(odds_ratios_rounded = odds_ratios_rounded,
-#                            lower_ci = lower_ci,
-#                            upper_ci = upper_ci)
-# 
-# # Print the data frame with adjusted Odds Ratios and Confidence Intervals
-# print(odds_ci_data)
-# knitr::kable(odds_ci_data, caption = "In Intervention only: Baseline characteristics predicting adherence to GIVE-MOVE protocol,  odds ratios with 96% confidence intervals, adjusted for all other variables")
-
 ```
 
-# Inverse Probability Weighting
+# Inverse Probability Weighting and adjusted/unadjusted PP model without weighting
 
-We will estimate inverse probability weights to generate a pseudo population, in which covariates no longer predict adherence, allowing adherence to appear to be randomized with respect to the observed covariate distribution. So, in this pseudo-population everyone either adheres to treatment or not. 
+We will estimate inverse probability weights to generate a pseudo population, in which covariates no longer predict adherence ("the adherents are made similar to the non-adherents" by upweighting those adherents that have similar characteristics as those non-adherent), allowing adherence to appear to be randomized with respect to the observed covariate distribution. So, in this pseudo-population everyone either adheres to treatment or not. 
 
 We can do this manually (using logistic regression models to predict the probability (=propensity) of treatment and then calculate the (un)stabilized weights) or estimate the weights on the PP population using the ipw package: https://cran.r-project.org/web/packages/ipw/index.html
 The package entails functions to estimate the probability to receive the observed treatment, based on individual characteristics. "ipwpoint" function is the function for point treatment situations. 
-Can calculate unstabilized and stabilized weights. Unstabilized weights are based on the inverse of the probability of receiving the observed treatment assignment. Stabilized weights take into account the fact that the estimated probabilities used in the calculation of unstabilized weights might not be very accurate, especially when treatment assignment is highly imbalanced or when the estimated probabilities are close to zero. Stabilized weights aim to reduce the variability and potential instability caused by extreme probabilities. 
-We will use the cluster-version of robust sandwich SE to correctly estimate the SE of the treatment effect estimate since there are multiple observations per participant.
+It can calculate unstabilized and stabilized weights. Unstabilized weights are based on the inverse of the probability of receiving the observed treatment assignment, i.e. be adherent in the respective arm. Stabilized weights take into account the fact that the estimated probabilities used in the calculation of unstabilized weights might not be very accurate, especially when treatment assignment is highly imbalanced or when the estimated probabilities are close to zero. Stabilized weights aim to reduce the variability and potential instability caused by extreme probabilities. 
+We will use the cluster-version of robust sandwich SE to correctly estimate the SE of the treatment effect estimate since there are multiple observations per participant (another option would be bootstrapping)
 
 ```{r echo=TRUE, warning=FALSE}
 # covariates and adherent datasets
@@ -335,30 +300,31 @@ PP_unadj2 <- df_ipw2 %>%
               family = "binomial", data=.)
 summ(PP_unadj2, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
 
-# adjusted PP model, adjusted for all baseline covariates not only stratification factors // definition 2
-PP_adj_all <- df_ipw2 %>% 
-  glm(endpoint ~ arm + agegr_der + stsite_der2 + regimen_der2 + sex + scrvl 
-  # + whocur 
-  + wt + time_on_art_yrs + time_on_curr_art_yrs + fathervit + mothervit + travtim + travcost 
-  # + travmod 
-  # + stsite
-      ,
-              family = "binomial", data=.)
-summ(PP_adj_all, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
+# # adjusted PP model, adjusted for all baseline covariates not only stratification factors // definition 2
+# PP_adj_all <- df_ipw2 %>% 
+#   glm(endpoint ~ arm + agegr_der + stsite_der2 + regimen_der2 + sex + scrvl 
+#   # + whocur 
+#   + wt + time_on_art_yrs + time_on_curr_art_yrs + fathervit + mothervit + travtim + travcost 
+#   # + travmod 
+#   # + stsite
+#       ,
+#               family = "binomial", data=.)
+# summ(PP_adj_all, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
 
 
 ### Now, use IPW instead
 
 # with stabilized weights // definition 1
+# did not coverge with the following: cd4count, hepbres, regcursat, missyn, miss2dyn, care
 ipw_sw <- ipwpoint(exposure = arm,
   family = "binomial",  # arm is binary
   link = "logit",
   numerator = ~ 1,
   denominator = ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl 
-  # + whocur 
+  + whocur 
   + wt + time_on_art_yrs + time_on_curr_art_yrs + fathervit + mothervit + travtim + travcost 
-  # + travmod 
-  # + stsite
+  + travmod 
+  + stsite
   ,
   data = as.data.frame(df_ipw))
 
@@ -366,7 +332,7 @@ summary(ipw_sw$ipw.weights)
 ipwplot(weights = ipw_sw$ipw.weights, logscale = FALSE, main = "Stabilized weights", xlim = c(0, 8))
 df_ipw$sw <- ipw_sw$ipw.weights
 
-# use the weights in the outcome model
+# use the weights in the outcome model and use the robust sandwich estimator (HC0) for 95%CI
 PP_ipw_sw <- df_ipw %>% 
   glm(endpoint ~ arm, weights = sw,
               family = "binomial", data=.)
@@ -378,10 +344,10 @@ ipw_usw <- ipwpoint(exposure = arm,
   link = "logit",
   numerator = NULL,
   denominator = ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl 
-  # + whocur 
+   + whocur 
   + wt + time_on_art_yrs + time_on_curr_art_yrs + fathervit + mothervit + travtim + travcost 
-  # + travmod 
-  # + stsite
+   + travmod 
+   + stsite
   ,
   data = as.data.frame(df_ipw))
 
@@ -401,10 +367,10 @@ ipw_sw2 <- ipwpoint(exposure = arm,
   link = "logit",
   numerator = ~ 1,
   denominator = ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl 
-  # + whocur 
+   + whocur 
   + wt + time_on_art_yrs + time_on_curr_art_yrs + fathervit + mothervit + travtim + travcost 
-  # + travmod 
-  # + stsite
+   + travmod 
+   + stsite
   ,
   data = as.data.frame(df_ipw2))
 
@@ -424,10 +390,10 @@ ipw_usw2 <- ipwpoint(exposure = arm,
   link = "logit",
   numerator = NULL,
   denominator = ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl 
-  # + whocur 
+   + whocur 
   + wt + time_on_art_yrs + time_on_curr_art_yrs + fathervit + mothervit + travtim + travcost 
-  # + travmod 
-  # + stsite
+   + travmod 
+   + stsite
   ,
   data = as.data.frame(df_ipw2))
 
@@ -442,14 +408,12 @@ PP_ipw_usw2 <- df_ipw2 %>%
 summ(PP_ipw_usw2, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
 
 
-
-
 ### check model and ipw weights
 ## check multicollinearity of the model used in ipwpoint:
-ipw.model <- glm(arm ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl + whocur + wt + time_on_art_yrs + time_on_curr_art_yrs + fathervit + mothervit + travtim + travcost + travmod 
-                 # + stsite
-              , family = "binomial", data=df_ipw2)
-summ(ipw.model, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
+# ipw.model <- glm(arm ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl + whocur + wt + time_on_art_yrs + time_on_curr_art_yrs + fathervit + mothervit + travtim + travcost + travmod 
+#                   + stsite
+#               , family = "binomial", data=df_ipw2)
+# summ(ipw.model, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
 
 # ipw.model <- glm(arm ~ agegr_der 
 #                 + stsite_der2 
@@ -475,9 +439,9 @@ summ(ipw.model, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
 #               , family = "binomial", data=df_ipw)
 # summ(ipw.model, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
 
-# Calculate Variance Inflation Factor values
-vif_values <- vif(ipw.model) # VIF = 1 / (1 - R²). "There are aliased coefficients in the model" = perfect multicollinearity // VIF values exceeding 5 or 10 are often considered indicative of significant multicollinearity
-print(vif_values)
+# # Calculate Variance Inflation Factor values
+# vif_values <- vif(ipw.model) # VIF = 1 / (1 - R²). "There are aliased coefficients in the model" = perfect multicollinearity // VIF values exceeding 5 or 10 are often considered indicative of significant multicollinearity
+# print(vif_values)
 
 ## check the summary of the unstabilized weights:
 round(summary(df_ipw2$usw), 3)
@@ -498,15 +462,9 @@ design.stab <- svydesign(ids = ~scrno, weights = ~sw, data = df_ipw2)
 covariates <- c("agegr_der","stsite_der2","regimen_der2",
                  "sex","scrvl",
                 "whocur",
-                # + cd4count 
-                # + hepbres 
                   "wt",
                   "time_on_art_yrs", 
                   "time_on_curr_art_yrs" ,
-                #  + regcursat 
-                # + missyn 
-                # + miss2dyn 
-                # + care 
                   "fathervit","mothervit", 
                   "travtim","travcost"
                 , "travmod"
@@ -561,7 +519,7 @@ PP_iv <- analysis %>%
               family = "binomial", data=.)
 summ(PP_iv, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
 
-# as expected, results seems biased
+# as expected, massive uncertainty, and unsure if assumptions valid
 
 ```
 

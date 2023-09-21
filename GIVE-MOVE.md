@@ -14,9 +14,8 @@ output:
 
 # Estimation of "a" per-protocol effect for GIVE-MOVE (there are several) 
 
-Based primarily o: 
-Guidelines for estimating causal effects in pragmatic randomized trials
-Eleanor J. Murray1, Sonja A. Swanson2, Miguel A. Hernán
+Based primarily on: 
+Guidelines for estimating causal effects in pragmatic randomized trials by Murray et al.
 
 Causal estimand of interest: The effect of receiving the assigned treatment strategies
 = The effect of successfully receiving GRT-guided strategy in intervention and VL-guided strategy in control
@@ -32,26 +31,23 @@ Intervention group:
 1) Participants not receiving a GRT although they were supposed to have one: 3 participants
 2) Participants not having the decision visit within six months (24 weeks) after randomization: 26 participants
 - of which LTFU: XXX ?
-- otherwise: missing/delayed GRT (that's already part of number 1?! why not summarized under 2?)
+- otherwise: missing/delayed GRT (but that's already part of number 1?!) or missing/delayed visit?
 
 Control group:
 1) Participants receiving a GRT although they were not supposed to have one: 3 participants
 2) Participants not receiving a VL although they were supposed to have one: 1 participant
 3) Participants not having the decision visit within six months (24 weeks) after randomization: 10 participants
 - of which LTFU: XXX ?
-- otherwise: missing/delayed VL (that's already part of number 2?! why not summarized under 3?)
+- otherwise: missing/delayed VL (that's already part of number 2?!)
 
-Note: Not having a VL result within the 9-month window and not having reached the primary endpoint before or at the 9-month visit (13 participants) is part of the primary endpoint/estimand. If not part of primary causal estimand, then use multiple imputation or IPW for LTFU.
+Note: Not having a VL result within the 9-month window (and not having reached the primary endpoint before or at the 9-month visit (13 participants)) is already part of the primary endpoint/estimand (if it would not be part of primary causal estimand, then use multiple imputation or IPW for LTFU)
 
 Define DAG: See slide in folder "DAG"
 
 Define method used:
 Because a point intervention is delivered at or close to the time of randomization, only covariates at or before the time of randomization can influence adherence to a point intervention. To validly estimate the per-protocol effect, baseline variables which predict adherence and are prognostic for the outcome need to be accounted for, either through direct adjustment or via an instrumental variable analysis.
 Inverse probability and standardization allow calculation of absolute risks in the study population and preserve the marginal (unconditional) interpretation and are therefore preferable for direct adjustment. 
-Other commonly used adjustment methods, like outcome regression and propensity score adjustment or matching, typically make strong assumptions about no effect heterogeneity (rely on the assumption of effect homogeneity across levels of all covariates), and do not easily yield unconditional absolute risks.
-(as a exploratory analysis, we may add an instrumental variable analyis, however, this analysis would rely on stronger assumptions and harder to interpret)
-Since point exposures happen only once, they typically require only control for baseline confounding. (However, estimating causal effects of point exposures on time to event may still require adjustment for time-varying confounders of loss to follow-up and the outcome.)
-
+Other commonly used adjustment methods, like propensity score adjustment or matching or instrumental variable, typically make strong assumptions about no effect heterogeneity (rely on the assumption of effect homogeneity across levels of all covariates), among others, and do not easily yield unconditional absolute risks.
 
 # Load packages
 
@@ -136,11 +132,11 @@ names(analysis)
 
 ```r
 ## protocol deviation variables
-# table(analysis$arm, analysis$prot_dev1) #All: not having the decision visit within six months (24 weeks) after randomization
-# table(analysis$arm, analysis$prot_dev2) #Cont P: not receiving a VL although was supposed to have one
-# table(analysis$arm, analysis$prot_dev3) #Int P: Not receiving a GRT although they were supposed to have one
-# table(analysis$arm, analysis$prot_dev4) #All: Not having a VL result within the 9-month window and not having reached the primary endpoint before or at the 9-month visit
-# table(analysis$arm, analysis$prot_dev5) #Cont P: GRT although they were not supposed to have one
+# table(analysis$arm, analysis$prot_dev1) #Both: not having the decision visit within six months (24 weeks) after randomization
+# table(analysis$arm, analysis$prot_dev2) #Cont: not receiving a VL although was supposed to have one
+# table(analysis$arm, analysis$prot_dev3) #Int: Not receiving a GRT although they were supposed to have one
+# table(analysis$arm, analysis$prot_dev4) #Both: Not having a VL result within the 9-month window and not having reached the primary endpoint before or at the 9-month visit
+# table(analysis$arm, analysis$prot_dev5) #Cont: GRT although they were not supposed to have one
 
 ## define non-adherence to treatment strategy/protocol 1: As per protocol
 analysis <- analysis %>%
@@ -938,11 +934,11 @@ analysis <- analysis %>%
 
 # multivariable logistic regression model, overall, on adherence
 model <- analysis %>% 
-  glm(ppadh2 ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl + whocur 
+  glm(ppadh ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl + whocur 
                + cd4count + hepbres + wt + time_on_art_yrs + time_on_curr_art_yrs 
                + regcursat 
-               # + missyn 
-               # + miss2dyn 
+               #+ missyn 
+               #+ miss2dyn 
                + care + fathervit + mothervit 
                + travtim + travcost + travmod 
                + stsite,
@@ -969,47 +965,47 @@ knitr::kable(odds_ci_data, caption = "Baseline characteristics predicting adhere
 
 Table: Baseline characteristics predicting adherence to GIVE-MOVE protocol,  odds ratios with 96% confidence intervals, adjusted for all other variables
 
-|                                        | odds_ratios_rounded|  lower_ci|    upper_ci|
-|:---------------------------------------|-------------------:|---------:|-----------:|
-|(Intercept)                             |        2.277933e+17|       Inf|         Inf|
-|agegr_der>= 12 and < 19                 |        5.500000e-01| 0.1883927|   15.897579|
-|stsite_der2Tanzania                     |        0.000000e+00| 0.0000000|         Inf|
-|regimen_der2NNRTI-based                 |        1.000000e-02| 0.0164441|   62.085574|
-|regimen_der2PI-based                    |        2.840000e+00| 1.8529603|  156.663213|
-|sexMale                                 |        6.100000e-01| 0.5366520|    6.252811|
-|scrvl                                   |        1.000000e+00| 2.7182727|    2.718297|
-|whocur.L                                |        9.470000e+00| 0.0000000|         Inf|
-|whocur.Q                                |        0.000000e+00| 0.0000000|         Inf|
-|whocur.C                                |        0.000000e+00| 0.0000000|         Inf|
-|cd4count                                |        1.000000e+00| 2.7123917|    2.723390|
-|hepbresPositive                         |        3.430000e+00| 0.4087850| 2313.060620|
-|wt                                      |        1.160000e+00| 2.8314210|    3.583652|
-|time_on_art_yrs                         |        7.700000e-01| 1.6988128|    2.741003|
-|time_on_curr_art_yrs                    |        1.440000e+00| 2.6223921|    6.786581|
-|regcursat.L                             |        2.710000e+00| 1.7028401|  133.073217|
-|regcursat.Q                             |        1.150000e+00| 0.1595219|   62.408458|
-|regcursat.C                             |        1.110000e+00| 0.5083380|   18.093237|
-|regcursat^4                             |        1.400000e-01| 0.0410527|   31.931822|
-|careFather                              |        1.290000e+00| 0.1952365|   68.244517|
-|careGrandparent(s)                      |        1.310000e+00| 0.2974938|   46.132756|
-|careMother                              |        1.470000e+00| 0.5945933|   31.886593|
-|careOther                               |        1.000000e+00| 0.1858224|   40.160497|
-|fathervitDead                           |        7.400000e-01| 0.3910194|   11.323533|
-|fathervitUnknown                        |        1.090000e+00| 0.2800237|   31.802001|
-|mothervitDead                           |        2.600000e+00| 1.6255697|  110.804494|
-|travtim                                 |        9.900000e-01| 2.6683051|    2.737272|
-|travcost                                |        1.000000e+00| 2.7177672|    2.719097|
-|travmodRide (horse/donkey)              |        3.000000e-02| 0.0000000|         Inf|
-|travmodTaxi / public transport          |        0.000000e+00| 0.0000000|         Inf|
-|travmodWalk                             |        0.000000e+00| 0.0000000|         Inf|
-|stsiteBaylor Clinic Hlotse              |        0.000000e+00| 0.0000000|         Inf|
-|stsiteBaylor Clinic Maseru              |        0.000000e+00| 0.0000000|         Inf|
-|stsiteBaylor Clinic Mohale's Hoek       |        0.000000e+00| 0.0000000|         Inf|
-|stsiteBaylor Clinic Mokhotlong          |        0.000000e+00| 0.0000000|         Inf|
-|stsiteIfakara One-Stop Clinic           |        1.670000e+00| 0.1610703|  175.951974|
-|stsiteMbagala Rangi Tatu Hospital       |        5.000000e-02| 0.0399624|   27.599868|
-|stsiteSeboche Mission Hospital          |        0.000000e+00| 0.0000000|         Inf|
-|stsiteTemeke Regional Referral Hospital |        1.560000e+00| 0.1043373|  216.919618|
+|                                        | odds_ratios_rounded|     lower_ci|     upper_ci|
+|:---------------------------------------|-------------------:|------------:|------------:|
+|(Intercept)                             |        2.506179e+09|          Inf|          Inf|
+|agegr_der>= 12 and < 19                 |        8.800000e-01| 3.150489e-01| 1.844696e+01|
+|stsite_der2Tanzania                     |        3.000000e-02| 1.787770e-02| 5.904851e+01|
+|regimen_der2NNRTI-based                 |        2.000000e-02| 3.669250e-02| 2.829376e+01|
+|regimen_der2PI-based                    |        4.580000e+00| 1.139784e+01| 8.300953e+02|
+|sexMale                                 |        6.600000e-01| 5.788789e-01| 6.454523e+00|
+|scrvl                                   |        1.000000e+00| 2.718274e+00| 2.718285e+00|
+|whocur.L                                |        5.870000e+00| 0.000000e+00|          Inf|
+|whocur.Q                                |        0.000000e+00| 0.000000e+00|          Inf|
+|whocur.C                                |        0.000000e+00| 0.000000e+00|          Inf|
+|cd4count                                |        1.000000e+00| 2.713443e+00| 2.723977e+00|
+|hepbresPositive                         |        1.500000e+01| 5.021777e+04| 2.111653e+08|
+|wt                                      |        1.180000e+00| 2.892330e+00| 3.675493e+00|
+|time_on_art_yrs                         |        6.900000e-01| 1.555504e+00| 2.533572e+00|
+|time_on_curr_art_yrs                    |        1.590000e+00| 3.053616e+00| 7.906374e+00|
+|regcursat.L                             |        4.550000e+00| 1.032135e+01| 8.722656e+02|
+|regcursat.Q                             |        9.200000e-01| 2.185352e-01| 2.905871e+01|
+|regcursat.C                             |        1.040000e+00| 4.535184e-01| 1.760543e+01|
+|regcursat^4                             |        1.000000e-01| 7.098960e-02| 1.713051e+01|
+|careFather                              |        3.500000e-01| 1.087061e-01| 1.849189e+01|
+|careGrandparent(s)                      |        1.150000e+00| 2.524565e-01| 3.915517e+01|
+|careMother                              |        1.050000e+00| 3.931255e-01| 2.083789e+01|
+|careOther                               |        9.500000e-01| 1.941580e-01| 3.468758e+01|
+|fathervitDead                           |        5.300000e-01| 3.080628e-01| 9.405372e+00|
+|fathervitUnknown                        |        1.070000e+00| 2.351549e-01| 3.639400e+01|
+|mothervitDead                           |        4.990000e+00| 2.005584e+01| 1.083082e+03|
+|travtim                                 |        9.900000e-01| 2.660543e+00| 2.723750e+00|
+|travcost                                |        1.000000e+00| 2.717959e+00| 2.719254e+00|
+|travmodRide (horse/donkey)              |        1.000000e-02| 0.000000e+00|          Inf|
+|travmodTaxi / public transport          |        0.000000e+00| 0.000000e+00|          Inf|
+|travmodWalk                             |        0.000000e+00| 0.000000e+00|          Inf|
+|stsiteBaylor Clinic Hlotse              |        2.000000e-02| 2.774480e-02| 3.717793e+01|
+|stsiteBaylor Clinic Maseru              |        1.300000e-01| 1.969570e-02| 6.581369e+01|
+|stsiteBaylor Clinic Mohale's Hoek       |        0.000000e+00| 2.182460e-02| 4.596696e+01|
+|stsiteBaylor Clinic Mokhotlong          |        4.000000e-02| 5.093610e-02| 2.147340e+01|
+|stsiteIfakara One-Stop Clinic           |        1.400000e+00| 1.192241e-01| 1.376942e+02|
+|stsiteMbagala Rangi Tatu Hospital       |        4.000000e-02| 3.710310e-02| 2.939591e+01|
+|stsiteSeboche Mission Hospital          |        1.700000e-01| 2.521110e-02| 5.564716e+01|
+|stsiteTemeke Regional Referral Hospital |        2.670000e+00| 2.909588e-01| 7.237631e+02|
 
 ```r
 # # By intervention arm
