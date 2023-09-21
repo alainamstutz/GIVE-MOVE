@@ -14,7 +14,7 @@ output:
 
 # Estimation of "a" per-protocol effect for GIVE-MOVE (there are several) 
 
-Based primarily on: 
+Based primarily o: 
 Guidelines for estimating causal effects in pragmatic randomized trials
 Eleanor J. Murray1, Sonja A. Swanson2, Miguel A. Hernán
 
@@ -335,6 +335,17 @@ PP_unadj2 <- df_ipw2 %>%
               family = "binomial", data=.)
 summ(PP_unadj2, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
 
+# adjusted PP model, adjusted for all baseline covariates not only stratification factors // definition 2
+PP_adj_all <- df_ipw2 %>% 
+  glm(endpoint ~ arm + agegr_der + stsite_der2 + regimen_der2 + sex + scrvl 
+  # + whocur 
+  + wt + time_on_art_yrs + time_on_curr_art_yrs + fathervit + mothervit + travtim + travcost 
+  # + travmod 
+  # + stsite
+      ,
+              family = "binomial", data=.)
+summ(PP_adj_all, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
+
 
 ### Now, use IPW instead
 
@@ -486,7 +497,7 @@ design.stab <- svydesign(ids = ~scrno, weights = ~sw, data = df_ipw2)
 # Covariates
 covariates <- c("agegr_der","stsite_der2","regimen_der2",
                  "sex","scrvl",
-                # "whocur",
+                "whocur",
                 # + cd4count 
                 # + hepbres 
                   "wt",
@@ -498,8 +509,8 @@ covariates <- c("agegr_der","stsite_der2","regimen_der2",
                 # + care 
                   "fathervit","mothervit", 
                   "travtim","travcost"
-                # , "travmod"
-                 # , "stsite" 
+                , "travmod"
+                 , "stsite" 
                 )
 # Table stratified by treatment status
 tab.unstab <- svyCreateTableOne(vars = covariates, strata = "arm", data = design.unstab, test = F)
@@ -562,14 +573,14 @@ summ(ITT_unadj, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
 
 summ(PP_adj, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
 summ(PP_unadj, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
-summ(PP_adj2, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
-summ(PP_unadj2, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
-
 summ(PP_ipw_sw, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
 summ(PP_ipw_usw, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
 
+summ(PP_adj2, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
+summ(PP_unadj2, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
 summ(PP_ipw_sw2, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
 summ(PP_ipw_usw2, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
+summ(PP_adj_all, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
 
 plot_summs(ITT, ITT_unadj, PP_adj, PP_unadj, PP_ipw_sw, PP_ipw_usw,
            scale = F,

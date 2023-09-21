@@ -14,7 +14,7 @@ output:
 
 # Estimation of "a" per-protocol effect for GIVE-MOVE (there are several) 
 
-Based primarily on: 
+Based primarily o: 
 Guidelines for estimating causal effects in pragmatic randomized trials
 Eleanor J. Murray1, Sonja A. Swanson2, Miguel A. Hernán
 
@@ -1316,6 +1316,173 @@ summ(PP_unadj2, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
 </table>
 
 ```r
+# adjusted PP model, adjusted for all baseline covariates not only stratification factors // definition 2
+PP_adj_all <- df_ipw2 %>% 
+  glm(endpoint ~ arm + agegr_der + stsite_der2 + regimen_der2 + sex + scrvl 
+  # + whocur 
+  + wt + time_on_art_yrs + time_on_curr_art_yrs + fathervit + mothervit + travtim + travcost 
+  # + travmod 
+  # + stsite
+      ,
+              family = "binomial", data=.)
+summ(PP_adj_all, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
+```
+
+  <table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;border-bottom: 0;">
+ <thead>
+  <tr>
+   <th style="text-align:left;">   </th>
+   <th style="text-align:right;"> exp(Est.) </th>
+   <th style="text-align:right;"> 2.5% </th>
+   <th style="text-align:right;"> 97.5% </th>
+   <th style="text-align:right;"> z val. </th>
+   <th style="text-align:right;"> p </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> (Intercept) </td>
+   <td style="text-align:right;"> 1.104 </td>
+   <td style="text-align:right;"> 0.341 </td>
+   <td style="text-align:right;"> 3.582 </td>
+   <td style="text-align:right;"> 0.166 </td>
+   <td style="text-align:right;"> 0.868 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> arm </td>
+   <td style="text-align:right;"> 0.746 </td>
+   <td style="text-align:right;"> 0.432 </td>
+   <td style="text-align:right;"> 1.290 </td>
+   <td style="text-align:right;"> -1.048 </td>
+   <td style="text-align:right;"> 0.295 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> agegr_der&gt;= 12 and 
+   </td>
+<td style="text-align:right;"> 1.993 </td>
+   <td style="text-align:right;"> 0.784 </td>
+   <td style="text-align:right;"> 5.066 </td>
+   <td style="text-align:right;"> 1.448 </td>
+   <td style="text-align:right;"> 0.147 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> stsite_der2Tanzania </td>
+   <td style="text-align:right;"> 1.425 </td>
+   <td style="text-align:right;"> 0.674 </td>
+   <td style="text-align:right;"> 3.015 </td>
+   <td style="text-align:right;"> 0.927 </td>
+   <td style="text-align:right;"> 0.354 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> regimen_der2NNRTI-based </td>
+   <td style="text-align:right;"> 0.716 </td>
+   <td style="text-align:right;"> 0.173 </td>
+   <td style="text-align:right;"> 2.959 </td>
+   <td style="text-align:right;"> -0.462 </td>
+   <td style="text-align:right;"> 0.644 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> regimen_der2PI-based </td>
+   <td style="text-align:right;"> 1.945 </td>
+   <td style="text-align:right;"> 0.851 </td>
+   <td style="text-align:right;"> 4.444 </td>
+   <td style="text-align:right;"> 1.577 </td>
+   <td style="text-align:right;"> 0.115 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> sexMale </td>
+   <td style="text-align:right;"> 1.439 </td>
+   <td style="text-align:right;"> 0.836 </td>
+   <td style="text-align:right;"> 2.474 </td>
+   <td style="text-align:right;"> 1.314 </td>
+   <td style="text-align:right;"> 0.189 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> scrvl </td>
+   <td style="text-align:right;"> 1.000 </td>
+   <td style="text-align:right;"> 1.000 </td>
+   <td style="text-align:right;"> 1.000 </td>
+   <td style="text-align:right;"> -0.932 </td>
+   <td style="text-align:right;"> 0.351 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> wt </td>
+   <td style="text-align:right;"> 0.982 </td>
+   <td style="text-align:right;"> 0.954 </td>
+   <td style="text-align:right;"> 1.011 </td>
+   <td style="text-align:right;"> -1.219 </td>
+   <td style="text-align:right;"> 0.223 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> time_on_art_yrs </td>
+   <td style="text-align:right;"> 0.981 </td>
+   <td style="text-align:right;"> 0.901 </td>
+   <td style="text-align:right;"> 1.069 </td>
+   <td style="text-align:right;"> -0.436 </td>
+   <td style="text-align:right;"> 0.663 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> time_on_curr_art_yrs </td>
+   <td style="text-align:right;"> 1.026 </td>
+   <td style="text-align:right;"> 0.887 </td>
+   <td style="text-align:right;"> 1.186 </td>
+   <td style="text-align:right;"> 0.343 </td>
+   <td style="text-align:right;"> 0.732 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> fathervitDead </td>
+   <td style="text-align:right;"> 1.027 </td>
+   <td style="text-align:right;"> 0.557 </td>
+   <td style="text-align:right;"> 1.895 </td>
+   <td style="text-align:right;"> 0.085 </td>
+   <td style="text-align:right;"> 0.932 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> fathervitUnknown </td>
+   <td style="text-align:right;"> 0.548 </td>
+   <td style="text-align:right;"> 0.195 </td>
+   <td style="text-align:right;"> 1.542 </td>
+   <td style="text-align:right;"> -1.140 </td>
+   <td style="text-align:right;"> 0.254 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> mothervitDead </td>
+   <td style="text-align:right;"> 0.764 </td>
+   <td style="text-align:right;"> 0.402 </td>
+   <td style="text-align:right;"> 1.450 </td>
+   <td style="text-align:right;"> -0.823 </td>
+   <td style="text-align:right;"> 0.410 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> mothervitUnknown </td>
+   <td style="text-align:right;"> 0.000 </td>
+   <td style="text-align:right;"> 0.000 </td>
+   <td style="text-align:right;"> Inf </td>
+   <td style="text-align:right;"> -0.016 </td>
+   <td style="text-align:right;"> 0.987 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> travtim </td>
+   <td style="text-align:right;"> 0.999 </td>
+   <td style="text-align:right;"> 0.993 </td>
+   <td style="text-align:right;"> 1.004 </td>
+   <td style="text-align:right;"> -0.492 </td>
+   <td style="text-align:right;"> 0.623 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> travcost </td>
+   <td style="text-align:right;"> 1.000 </td>
+   <td style="text-align:right;"> 1.000 </td>
+   <td style="text-align:right;"> 1.000 </td>
+   <td style="text-align:right;"> -1.073 </td>
+   <td style="text-align:right;"> 0.283 </td>
+  </tr>
+</tbody>
+<tfoot><tr><td style="padding: 0; " colspan="100%">
+<sup></sup> Standard errors: MLE</td></tr></tfoot>
+</table>
+
+```r
 ### Now, use IPW instead
 
 # with stabilized weights // definition 1
@@ -1887,7 +2054,7 @@ design.stab <- svydesign(ids = ~scrno, weights = ~sw, data = df_ipw2)
 # Covariates
 covariates <- c("agegr_der","stsite_der2","regimen_der2",
                  "sex","scrvl",
-                # "whocur",
+                "whocur",
                 # + cd4count 
                 # + hepbres 
                   "wt",
@@ -1899,8 +2066,8 @@ covariates <- c("agegr_der","stsite_der2","regimen_der2",
                 # + care 
                   "fathervit","mothervit", 
                   "travtim","travcost"
-                # , "travmod"
-                 # , "stsite" 
+                , "travmod"
+                 , "stsite" 
                 )
 # Table stratified by treatment status
 tab.unstab <- svyCreateTableOne(vars = covariates, strata = "arm", data = design.unstab, test = F)
@@ -1908,54 +2075,98 @@ print(tab.unstab, smd = T)
 ```
 
 ```
-##                                   Stratified by arm
-##                                    0                     1                   
-##   n                                    242.7                241.4            
-##   agegr_der = >= 12 and < 19 (%)       147.2 (60.7)         147.1 (60.9)     
-##   stsite_der2 = Tanzania (%)            67.7 (27.9)          67.4 (27.9)     
-##   regimen_der2 (%)                                                           
-##      INSTI-based                       146.2 (60.2)         145.2 (60.2)     
-##      NNRTI-based                        10.9 ( 4.5)          11.3 ( 4.7)     
-##      PI-based                           85.6 (35.3)          84.9 (35.2)     
-##   sex = Male (%)                       108.7 (44.8)         105.6 (43.7)     
-##   scrvl (mean (SD))                114076.87 (746208.32) 90243.32 (391504.42)
-##   wt (mean (SD))                       34.55 (16.00)        34.44 (15.38)    
-##   time_on_art_yrs (mean (SD))           6.93 (3.92)          6.92 (4.36)     
-##   time_on_curr_art_yrs (mean (SD))      2.60 (2.31)          2.62 (2.55)     
-##   fathervit (%)                                                              
-##      Alive                             143.3 (59.0)         143.7 (59.5)     
-##      Dead                               79.0 (32.5)          77.9 (32.3)     
-##      Unknown                            20.5 ( 8.4)          19.8 ( 8.2)     
-##   mothervit (%)                                                              
-##      Alive                             170.5 (70.2)         168.6 (69.8)     
-##      Dead                               69.8 (28.7)          70.4 (29.1)     
-##      Unknown                             2.4 ( 1.0)           2.4 ( 1.0)     
-##   travtim (mean (SD))                  68.48 (57.50)        67.49 (45.94)    
-##   travcost (mean (SD))               1678.05 (4664.27)    1483.60 (3401.47)  
-##                                   Stratified by arm
-##                                    SMD   
-##   n                                      
-##   agegr_der = >= 12 and < 19 (%)    0.006
-##   stsite_der2 = Tanzania (%)       <0.001
-##   regimen_der2 (%)                  0.009
-##      INSTI-based                         
-##      NNRTI-based                         
-##      PI-based                            
-##   sex = Male (%)                    0.021
-##   scrvl (mean (SD))                 0.040
-##   wt (mean (SD))                    0.007
-##   time_on_art_yrs (mean (SD))       0.002
-##   time_on_curr_art_yrs (mean (SD))  0.011
-##   fathervit (%)                     0.011
-##      Alive                               
-##      Dead                                
-##      Unknown                             
-##   mothervit (%)                     0.009
-##      Alive                               
-##      Dead                                
-##      Unknown                             
-##   travtim (mean (SD))               0.019
-##   travcost (mean (SD))              0.048
+##                                                 Stratified by arm
+##                                                  0                    
+##   n                                                  242.7            
+##   agegr_der = >= 12 and < 19 (%)                     147.2 (60.7)     
+##   stsite_der2 = Tanzania (%)                          67.7 (27.9)     
+##   regimen_der2 (%)                                                    
+##      INSTI-based                                     146.2 (60.2)     
+##      NNRTI-based                                      10.9 ( 4.5)     
+##      PI-based                                         85.6 (35.3)     
+##   sex = Male (%)                                     108.7 (44.8)     
+##   scrvl (mean (SD))                              114076.87 (746208.32)
+##   whocur (%)                                                          
+##      T1                                              235.8 (97.2)     
+##      T2                                                1.5 ( 0.6)     
+##      T3                                                5.4 ( 2.2)     
+##      T4                                                0.0 ( 0.0)     
+##   wt (mean (SD))                                     34.55 (16.00)    
+##   time_on_art_yrs (mean (SD))                         6.93 (3.92)     
+##   time_on_curr_art_yrs (mean (SD))                    2.60 (2.31)     
+##   fathervit (%)                                                       
+##      Alive                                           143.3 (59.0)     
+##      Dead                                             79.0 (32.5)     
+##      Unknown                                          20.5 ( 8.4)     
+##   mothervit (%)                                                       
+##      Alive                                           170.5 (70.2)     
+##      Dead                                             69.8 (28.7)     
+##      Unknown                                           2.4 ( 1.0)     
+##   travtim (mean (SD))                                68.48 (57.50)    
+##   travcost (mean (SD))                             1678.05 (4664.27)  
+##   travmod (%)                                                         
+##      Bicycle                                           0.0 ( 0.0)     
+##      Private motorised vehicle (own or borrowed)       3.3 ( 1.4)     
+##      Ride (horse/donkey)                               0.0 ( 0.0)     
+##      Taxi / public transport                         235.4 (97.0)     
+##      Walk                                              4.0 ( 1.6)     
+##   stsite (%)                                                          
+##      Baylor Clinic Butha-Buthe                        51.2 (21.1)     
+##      Baylor Clinic Hlotse                             34.9 (14.4)     
+##      Baylor Clinic Maseru                             27.5 (11.3)     
+##      Baylor Clinic Mohale's Hoek                       9.5 ( 3.9)     
+##      Baylor Clinic Mokhotlong                         32.4 (13.3)     
+##      Ifakara One-Stop Clinic                          34.4 (14.2)     
+##      Mbagala Rangi Tatu Hospital                      14.7 ( 6.1)     
+##      Seboche Mission Hospital                         19.5 ( 8.0)     
+##      Temeke Regional Referral Hospital                 5.0 ( 2.1)     
+##      Upendano Dispensary                              13.5 ( 5.6)     
+##                                                 Stratified by arm
+##                                                  1                    SMD   
+##   n                                                 241.4                   
+##   agegr_der = >= 12 and < 19 (%)                    147.1 (60.9)       0.006
+##   stsite_der2 = Tanzania (%)                         67.4 (27.9)      <0.001
+##   regimen_der2 (%)                                                     0.009
+##      INSTI-based                                    145.2 (60.2)            
+##      NNRTI-based                                     11.3 ( 4.7)            
+##      PI-based                                        84.9 (35.2)            
+##   sex = Male (%)                                    105.6 (43.7)       0.021
+##   scrvl (mean (SD))                              90243.32 (391504.42)  0.040
+##   whocur (%)                                                           0.298
+##      T1                                             233.0 (96.5)            
+##      T2                                               5.5 ( 2.3)            
+##      T3                                               0.0 ( 0.0)            
+##      T4                                               2.9 ( 1.2)            
+##   wt (mean (SD))                                    34.44 (15.38)      0.007
+##   time_on_art_yrs (mean (SD))                        6.92 (4.36)       0.002
+##   time_on_curr_art_yrs (mean (SD))                   2.62 (2.55)       0.011
+##   fathervit (%)                                                        0.011
+##      Alive                                          143.7 (59.5)            
+##      Dead                                            77.9 (32.3)            
+##      Unknown                                         19.8 ( 8.2)            
+##   mothervit (%)                                                        0.009
+##      Alive                                          168.6 (69.8)            
+##      Dead                                            70.4 (29.1)            
+##      Unknown                                          2.4 ( 1.0)            
+##   travtim (mean (SD))                               67.49 (45.94)      0.019
+##   travcost (mean (SD))                            1483.60 (3401.47)    0.048
+##   travmod (%)                                                          0.229
+##      Bicycle                                          0.0 ( 0.0)            
+##      Private motorised vehicle (own or borrowed)      2.1 ( 0.9)            
+##      Ride (horse/donkey)                              2.0 ( 0.8)            
+##      Taxi / public transport                        237.3 (98.3)            
+##      Walk                                             0.0 ( 0.0)            
+##   stsite (%)                                                           0.362
+##      Baylor Clinic Butha-Buthe                       52.1 (21.6)            
+##      Baylor Clinic Hlotse                            37.7 (15.6)            
+##      Baylor Clinic Maseru                            32.6 (13.5)            
+##      Baylor Clinic Mohale's Hoek                     16.2 ( 6.7)            
+##      Baylor Clinic Mokhotlong                        21.4 ( 8.9)            
+##      Ifakara One-Stop Clinic                         30.1 (12.5)            
+##      Mbagala Rangi Tatu Hospital                      8.1 ( 3.4)            
+##      Seboche Mission Hospital                        14.0 ( 5.8)            
+##      Temeke Regional Referral Hospital               18.2 ( 7.5)            
+##      Upendano Dispensary                             11.0 ( 4.5)
 ```
 
 ```r
@@ -1964,54 +2175,98 @@ print(tab.stab, smd = T)
 ```
 
 ```
-##                                   Stratified by arm
-##                                    0                     1                   
-##   n                                    125.8                116.2            
-##   agegr_der = >= 12 and < 19 (%)        76.3 (60.7)          70.8 (60.9)     
-##   stsite_der2 = Tanzania (%)            35.1 (27.9)          32.4 (27.9)     
-##   regimen_der2 (%)                                                           
-##      INSTI-based                        75.8 (60.2)          69.9 (60.2)     
-##      NNRTI-based                         5.6 ( 4.5)           5.4 ( 4.7)     
-##      PI-based                           44.4 (35.3)          40.9 (35.2)     
-##   sex = Male (%)                        56.4 (44.8)          50.9 (43.7)     
-##   scrvl (mean (SD))                114076.87 (746208.32) 90243.32 (391504.42)
-##   wt (mean (SD))                       34.55 (16.00)        34.44 (15.38)    
-##   time_on_art_yrs (mean (SD))           6.93 (3.92)          6.92 (4.36)     
-##   time_on_curr_art_yrs (mean (SD))      2.60 (2.31)          2.62 (2.55)     
-##   fathervit (%)                                                              
-##      Alive                              74.3 (59.0)          69.2 (59.5)     
-##      Dead                               41.0 (32.5)          37.5 (32.3)     
-##      Unknown                            10.6 ( 8.4)           9.6 ( 8.2)     
-##   mothervit (%)                                                              
-##      Alive                              88.4 (70.2)          81.2 (69.8)     
-##      Dead                               36.2 (28.7)          33.9 (29.1)     
-##      Unknown                             1.3 ( 1.0)           1.2 ( 1.0)     
-##   travtim (mean (SD))                  68.48 (57.50)        67.49 (45.94)    
-##   travcost (mean (SD))               1678.05 (4664.27)    1483.60 (3401.47)  
-##                                   Stratified by arm
-##                                    SMD   
-##   n                                      
-##   agegr_der = >= 12 and < 19 (%)    0.006
-##   stsite_der2 = Tanzania (%)       <0.001
-##   regimen_der2 (%)                  0.009
-##      INSTI-based                         
-##      NNRTI-based                         
-##      PI-based                            
-##   sex = Male (%)                    0.021
-##   scrvl (mean (SD))                 0.040
-##   wt (mean (SD))                    0.007
-##   time_on_art_yrs (mean (SD))       0.002
-##   time_on_curr_art_yrs (mean (SD))  0.011
-##   fathervit (%)                     0.011
-##      Alive                               
-##      Dead                                
-##      Unknown                             
-##   mothervit (%)                     0.009
-##      Alive                               
-##      Dead                                
-##      Unknown                             
-##   travtim (mean (SD))               0.019
-##   travcost (mean (SD))              0.048
+##                                                 Stratified by arm
+##                                                  0                    
+##   n                                                  125.8            
+##   agegr_der = >= 12 and < 19 (%)                      76.3 (60.7)     
+##   stsite_der2 = Tanzania (%)                          35.1 (27.9)     
+##   regimen_der2 (%)                                                    
+##      INSTI-based                                      75.8 (60.2)     
+##      NNRTI-based                                       5.6 ( 4.5)     
+##      PI-based                                         44.4 (35.3)     
+##   sex = Male (%)                                      56.4 (44.8)     
+##   scrvl (mean (SD))                              114076.87 (746208.32)
+##   whocur (%)                                                          
+##      T1                                              122.3 (97.2)     
+##      T2                                                0.8 ( 0.6)     
+##      T3                                                2.8 ( 2.2)     
+##      T4                                                0.0 ( 0.0)     
+##   wt (mean (SD))                                     34.55 (16.00)    
+##   time_on_art_yrs (mean (SD))                         6.93 (3.92)     
+##   time_on_curr_art_yrs (mean (SD))                    2.60 (2.31)     
+##   fathervit (%)                                                       
+##      Alive                                            74.3 (59.0)     
+##      Dead                                             41.0 (32.5)     
+##      Unknown                                          10.6 ( 8.4)     
+##   mothervit (%)                                                       
+##      Alive                                            88.4 (70.2)     
+##      Dead                                             36.2 (28.7)     
+##      Unknown                                           1.3 ( 1.0)     
+##   travtim (mean (SD))                                68.48 (57.50)    
+##   travcost (mean (SD))                             1678.05 (4664.27)  
+##   travmod (%)                                                         
+##      Bicycle                                           0.0 ( 0.0)     
+##      Private motorised vehicle (own or borrowed)       1.7 ( 1.4)     
+##      Ride (horse/donkey)                               0.0 ( 0.0)     
+##      Taxi / public transport                         122.0 (97.0)     
+##      Walk                                              2.1 ( 1.6)     
+##   stsite (%)                                                          
+##      Baylor Clinic Butha-Buthe                        26.6 (21.1)     
+##      Baylor Clinic Hlotse                             18.1 (14.4)     
+##      Baylor Clinic Maseru                             14.3 (11.3)     
+##      Baylor Clinic Mohale's Hoek                       4.9 ( 3.9)     
+##      Baylor Clinic Mokhotlong                         16.8 (13.3)     
+##      Ifakara One-Stop Clinic                          17.9 (14.2)     
+##      Mbagala Rangi Tatu Hospital                       7.6 ( 6.1)     
+##      Seboche Mission Hospital                         10.1 ( 8.0)     
+##      Temeke Regional Referral Hospital                 2.6 ( 2.1)     
+##      Upendano Dispensary                               7.0 ( 5.6)     
+##                                                 Stratified by arm
+##                                                  1                    SMD   
+##   n                                                 116.2                   
+##   agegr_der = >= 12 and < 19 (%)                     70.8 (60.9)       0.006
+##   stsite_der2 = Tanzania (%)                         32.4 (27.9)      <0.001
+##   regimen_der2 (%)                                                     0.009
+##      INSTI-based                                     69.9 (60.2)            
+##      NNRTI-based                                      5.4 ( 4.7)            
+##      PI-based                                        40.9 (35.2)            
+##   sex = Male (%)                                     50.9 (43.7)       0.021
+##   scrvl (mean (SD))                              90243.32 (391504.42)  0.040
+##   whocur (%)                                                           0.298
+##      T1                                             112.2 (96.5)            
+##      T2                                               2.7 ( 2.3)            
+##      T3                                               0.0 ( 0.0)            
+##      T4                                               1.4 ( 1.2)            
+##   wt (mean (SD))                                    34.44 (15.38)      0.007
+##   time_on_art_yrs (mean (SD))                        6.92 (4.36)       0.002
+##   time_on_curr_art_yrs (mean (SD))                   2.62 (2.55)       0.011
+##   fathervit (%)                                                        0.011
+##      Alive                                           69.2 (59.5)            
+##      Dead                                            37.5 (32.3)            
+##      Unknown                                          9.6 ( 8.2)            
+##   mothervit (%)                                                        0.009
+##      Alive                                           81.2 (69.8)            
+##      Dead                                            33.9 (29.1)            
+##      Unknown                                          1.2 ( 1.0)            
+##   travtim (mean (SD))                               67.49 (45.94)      0.019
+##   travcost (mean (SD))                            1483.60 (3401.47)    0.048
+##   travmod (%)                                                          0.229
+##      Bicycle                                          0.0 ( 0.0)            
+##      Private motorised vehicle (own or borrowed)      1.0 ( 0.9)            
+##      Ride (horse/donkey)                              1.0 ( 0.8)            
+##      Taxi / public transport                        114.3 (98.3)            
+##      Walk                                             0.0 ( 0.0)            
+##   stsite (%)                                                           0.362
+##      Baylor Clinic Butha-Buthe                       25.1 (21.6)            
+##      Baylor Clinic Hlotse                            18.2 (15.6)            
+##      Baylor Clinic Maseru                            15.7 (13.5)            
+##      Baylor Clinic Mohale's Hoek                      7.8 ( 6.7)            
+##      Baylor Clinic Mokhotlong                        10.3 ( 8.9)            
+##      Ifakara One-Stop Clinic                         14.5 (12.5)            
+##      Mbagala Rangi Tatu Hospital                      3.9 ( 3.4)            
+##      Seboche Mission Hospital                         6.7 ( 5.8)            
+##      Temeke Regional Referral Hospital                8.8 ( 7.5)            
+##      Upendano Dispensary                              5.3 ( 4.5)
 ```
 
 ## As a "sensitivity" analysis (and for fun): add an instrumental variable analysis (even though assumptions probably do not hold)
@@ -2577,6 +2832,80 @@ summ(PP_unadj, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
 </table>
 
 ```r
+summ(PP_ipw_sw, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
+```
+
+  <table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;border-bottom: 0;">
+ <thead>
+  <tr>
+   <th style="text-align:left;">   </th>
+   <th style="text-align:right;"> exp(Est.) </th>
+   <th style="text-align:right;"> 2.5% </th>
+   <th style="text-align:right;"> 97.5% </th>
+   <th style="text-align:right;"> z val. </th>
+   <th style="text-align:right;"> p </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> (Intercept) </td>
+   <td style="text-align:right;"> 0.95 </td>
+   <td style="text-align:right;"> 0.65 </td>
+   <td style="text-align:right;"> 1.38 </td>
+   <td style="text-align:right;"> -0.28 </td>
+   <td style="text-align:right;"> 0.78 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> arm </td>
+   <td style="text-align:right;"> 0.71 </td>
+   <td style="text-align:right;"> 0.41 </td>
+   <td style="text-align:right;"> 1.21 </td>
+   <td style="text-align:right;"> -1.26 </td>
+   <td style="text-align:right;"> 0.21 </td>
+  </tr>
+</tbody>
+<tfoot><tr><td style="padding: 0; " colspan="100%">
+<sup></sup> Standard errors: Robust, type = HC0</td></tr></tfoot>
+</table>
+
+```r
+summ(PP_ipw_usw, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
+```
+
+  <table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;border-bottom: 0;">
+ <thead>
+  <tr>
+   <th style="text-align:left;">   </th>
+   <th style="text-align:right;"> exp(Est.) </th>
+   <th style="text-align:right;"> 2.5% </th>
+   <th style="text-align:right;"> 97.5% </th>
+   <th style="text-align:right;"> z val. </th>
+   <th style="text-align:right;"> p </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> (Intercept) </td>
+   <td style="text-align:right;"> 0.95 </td>
+   <td style="text-align:right;"> 0.65 </td>
+   <td style="text-align:right;"> 1.38 </td>
+   <td style="text-align:right;"> -0.28 </td>
+   <td style="text-align:right;"> 0.78 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> arm </td>
+   <td style="text-align:right;"> 0.71 </td>
+   <td style="text-align:right;"> 0.41 </td>
+   <td style="text-align:right;"> 1.21 </td>
+   <td style="text-align:right;"> -1.26 </td>
+   <td style="text-align:right;"> 0.21 </td>
+  </tr>
+</tbody>
+<tfoot><tr><td style="padding: 0; " colspan="100%">
+<sup></sup> Standard errors: Robust, type = HC0</td></tr></tfoot>
+</table>
+
+```r
 summ(PP_adj2, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
 ```
 
@@ -2684,80 +3013,6 @@ summ(PP_unadj2, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
 </table>
 
 ```r
-summ(PP_ipw_sw, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
-```
-
-  <table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;border-bottom: 0;">
- <thead>
-  <tr>
-   <th style="text-align:left;">   </th>
-   <th style="text-align:right;"> exp(Est.) </th>
-   <th style="text-align:right;"> 2.5% </th>
-   <th style="text-align:right;"> 97.5% </th>
-   <th style="text-align:right;"> z val. </th>
-   <th style="text-align:right;"> p </th>
-  </tr>
- </thead>
-<tbody>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> (Intercept) </td>
-   <td style="text-align:right;"> 0.95 </td>
-   <td style="text-align:right;"> 0.65 </td>
-   <td style="text-align:right;"> 1.38 </td>
-   <td style="text-align:right;"> -0.28 </td>
-   <td style="text-align:right;"> 0.78 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> arm </td>
-   <td style="text-align:right;"> 0.71 </td>
-   <td style="text-align:right;"> 0.41 </td>
-   <td style="text-align:right;"> 1.21 </td>
-   <td style="text-align:right;"> -1.26 </td>
-   <td style="text-align:right;"> 0.21 </td>
-  </tr>
-</tbody>
-<tfoot><tr><td style="padding: 0; " colspan="100%">
-<sup></sup> Standard errors: Robust, type = HC0</td></tr></tfoot>
-</table>
-
-```r
-summ(PP_ipw_usw, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
-```
-
-  <table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;border-bottom: 0;">
- <thead>
-  <tr>
-   <th style="text-align:left;">   </th>
-   <th style="text-align:right;"> exp(Est.) </th>
-   <th style="text-align:right;"> 2.5% </th>
-   <th style="text-align:right;"> 97.5% </th>
-   <th style="text-align:right;"> z val. </th>
-   <th style="text-align:right;"> p </th>
-  </tr>
- </thead>
-<tbody>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> (Intercept) </td>
-   <td style="text-align:right;"> 0.95 </td>
-   <td style="text-align:right;"> 0.65 </td>
-   <td style="text-align:right;"> 1.38 </td>
-   <td style="text-align:right;"> -0.28 </td>
-   <td style="text-align:right;"> 0.78 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> arm </td>
-   <td style="text-align:right;"> 0.71 </td>
-   <td style="text-align:right;"> 0.41 </td>
-   <td style="text-align:right;"> 1.21 </td>
-   <td style="text-align:right;"> -1.26 </td>
-   <td style="text-align:right;"> 0.21 </td>
-  </tr>
-</tbody>
-<tfoot><tr><td style="padding: 0; " colspan="100%">
-<sup></sup> Standard errors: Robust, type = HC0</td></tr></tfoot>
-</table>
-
-```r
 summ(PP_ipw_sw2, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
 ```
 
@@ -2829,6 +3084,164 @@ summ(PP_ipw_usw2, exp = T, confint = T, model.info = F, model.fit = F, robust = 
 </tbody>
 <tfoot><tr><td style="padding: 0; " colspan="100%">
 <sup></sup> Standard errors: Robust, type = HC0</td></tr></tfoot>
+</table>
+
+```r
+summ(PP_adj_all, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
+```
+
+  <table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;border-bottom: 0;">
+ <thead>
+  <tr>
+   <th style="text-align:left;">   </th>
+   <th style="text-align:right;"> exp(Est.) </th>
+   <th style="text-align:right;"> 2.5% </th>
+   <th style="text-align:right;"> 97.5% </th>
+   <th style="text-align:right;"> z val. </th>
+   <th style="text-align:right;"> p </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> (Intercept) </td>
+   <td style="text-align:right;"> 1.104 </td>
+   <td style="text-align:right;"> 0.341 </td>
+   <td style="text-align:right;"> 3.582 </td>
+   <td style="text-align:right;"> 0.166 </td>
+   <td style="text-align:right;"> 0.868 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> arm </td>
+   <td style="text-align:right;"> 0.746 </td>
+   <td style="text-align:right;"> 0.432 </td>
+   <td style="text-align:right;"> 1.290 </td>
+   <td style="text-align:right;"> -1.048 </td>
+   <td style="text-align:right;"> 0.295 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> agegr_der&gt;= 12 and 
+   </td>
+<td style="text-align:right;"> 1.993 </td>
+   <td style="text-align:right;"> 0.784 </td>
+   <td style="text-align:right;"> 5.066 </td>
+   <td style="text-align:right;"> 1.448 </td>
+   <td style="text-align:right;"> 0.147 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> stsite_der2Tanzania </td>
+   <td style="text-align:right;"> 1.425 </td>
+   <td style="text-align:right;"> 0.674 </td>
+   <td style="text-align:right;"> 3.015 </td>
+   <td style="text-align:right;"> 0.927 </td>
+   <td style="text-align:right;"> 0.354 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> regimen_der2NNRTI-based </td>
+   <td style="text-align:right;"> 0.716 </td>
+   <td style="text-align:right;"> 0.173 </td>
+   <td style="text-align:right;"> 2.959 </td>
+   <td style="text-align:right;"> -0.462 </td>
+   <td style="text-align:right;"> 0.644 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> regimen_der2PI-based </td>
+   <td style="text-align:right;"> 1.945 </td>
+   <td style="text-align:right;"> 0.851 </td>
+   <td style="text-align:right;"> 4.444 </td>
+   <td style="text-align:right;"> 1.577 </td>
+   <td style="text-align:right;"> 0.115 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> sexMale </td>
+   <td style="text-align:right;"> 1.439 </td>
+   <td style="text-align:right;"> 0.836 </td>
+   <td style="text-align:right;"> 2.474 </td>
+   <td style="text-align:right;"> 1.314 </td>
+   <td style="text-align:right;"> 0.189 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> scrvl </td>
+   <td style="text-align:right;"> 1.000 </td>
+   <td style="text-align:right;"> 1.000 </td>
+   <td style="text-align:right;"> 1.000 </td>
+   <td style="text-align:right;"> -0.932 </td>
+   <td style="text-align:right;"> 0.351 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> wt </td>
+   <td style="text-align:right;"> 0.982 </td>
+   <td style="text-align:right;"> 0.954 </td>
+   <td style="text-align:right;"> 1.011 </td>
+   <td style="text-align:right;"> -1.219 </td>
+   <td style="text-align:right;"> 0.223 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> time_on_art_yrs </td>
+   <td style="text-align:right;"> 0.981 </td>
+   <td style="text-align:right;"> 0.901 </td>
+   <td style="text-align:right;"> 1.069 </td>
+   <td style="text-align:right;"> -0.436 </td>
+   <td style="text-align:right;"> 0.663 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> time_on_curr_art_yrs </td>
+   <td style="text-align:right;"> 1.026 </td>
+   <td style="text-align:right;"> 0.887 </td>
+   <td style="text-align:right;"> 1.186 </td>
+   <td style="text-align:right;"> 0.343 </td>
+   <td style="text-align:right;"> 0.732 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> fathervitDead </td>
+   <td style="text-align:right;"> 1.027 </td>
+   <td style="text-align:right;"> 0.557 </td>
+   <td style="text-align:right;"> 1.895 </td>
+   <td style="text-align:right;"> 0.085 </td>
+   <td style="text-align:right;"> 0.932 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> fathervitUnknown </td>
+   <td style="text-align:right;"> 0.548 </td>
+   <td style="text-align:right;"> 0.195 </td>
+   <td style="text-align:right;"> 1.542 </td>
+   <td style="text-align:right;"> -1.140 </td>
+   <td style="text-align:right;"> 0.254 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> mothervitDead </td>
+   <td style="text-align:right;"> 0.764 </td>
+   <td style="text-align:right;"> 0.402 </td>
+   <td style="text-align:right;"> 1.450 </td>
+   <td style="text-align:right;"> -0.823 </td>
+   <td style="text-align:right;"> 0.410 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> mothervitUnknown </td>
+   <td style="text-align:right;"> 0.000 </td>
+   <td style="text-align:right;"> 0.000 </td>
+   <td style="text-align:right;"> Inf </td>
+   <td style="text-align:right;"> -0.016 </td>
+   <td style="text-align:right;"> 0.987 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> travtim </td>
+   <td style="text-align:right;"> 0.999 </td>
+   <td style="text-align:right;"> 0.993 </td>
+   <td style="text-align:right;"> 1.004 </td>
+   <td style="text-align:right;"> -0.492 </td>
+   <td style="text-align:right;"> 0.623 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;"> travcost </td>
+   <td style="text-align:right;"> 1.000 </td>
+   <td style="text-align:right;"> 1.000 </td>
+   <td style="text-align:right;"> 1.000 </td>
+   <td style="text-align:right;"> -1.073 </td>
+   <td style="text-align:right;"> 0.283 </td>
+  </tr>
+</tbody>
+<tfoot><tr><td style="padding: 0; " colspan="100%">
+<sup></sup> Standard errors: MLE</td></tr></tfoot>
 </table>
 
 ```r
