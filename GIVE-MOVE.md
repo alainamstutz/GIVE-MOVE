@@ -1007,47 +1007,14 @@ Table: Baseline characteristics predicting adherence to GIVE-MOVE protocol,  odd
 |stsiteSeboche Mission Hospital          |        1.700000e-01| 2.521110e-02| 5.564716e+01|
 |stsiteTemeke Regional Referral Hospital |        2.670000e+00| 2.909588e-01| 7.237631e+02|
 
-```r
-# # By intervention arm
-# analysis_int <- analysis %>%
-#   filter(arm == 1)
-# model <- analysis_int %>% 
-#   glm(ppadh ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl + whocur 
-#                + cd4count + hepbres + wt + time_on_art_yrs + time_on_curr_art_yrs 
-#                + regcursat 
-#                # + missyn 
-#                # + miss2dyn 
-#                + care + fathervit + mothervit 
-#                + travtim + travcost + travmod 
-#                + stsite,
-#               family = "binomial", data=.)
-# 
-# # Extract the coefficients, convert to ORs, round them, extract their standard errors, and calculate 95% CI
-# coefficients <- coef(summary(model))
-# odds_ratios <- exp(coefficients[, 1])
-# odds_ratios_rounded <- round(odds_ratios, digits = 2)
-# standard_errors <- coefficients[, 2]
-# lower_ci <- exp(odds_ratios - 1.96 * standard_errors)
-# upper_ci <- exp(odds_ratios + 1.96 * standard_errors)
-# 
-# # Combine the adjusted Odds Ratios and Confidence Intervals into a data frame
-# odds_ci_data <- data.frame(odds_ratios_rounded = odds_ratios_rounded,
-#                            lower_ci = lower_ci,
-#                            upper_ci = upper_ci)
-# 
-# # Print the data frame with adjusted Odds Ratios and Confidence Intervals
-# print(odds_ci_data)
-# knitr::kable(odds_ci_data, caption = "In Intervention only: Baseline characteristics predicting adherence to GIVE-MOVE protocol,  odds ratios with 96% confidence intervals, adjusted for all other variables")
-```
+# Inverse Probability Weighting and adjusted/unadjusted PP model without weighting
 
-# Inverse Probability Weighting
-
-We will estimate inverse probability weights to generate a pseudo population, in which covariates no longer predict adherence, allowing adherence to appear to be randomized with respect to the observed covariate distribution. So, in this pseudo-population everyone either adheres to treatment or not. 
+We will estimate inverse probability weights to generate a pseudo population, in which covariates no longer predict adherence ("the adherents are made similar to the non-adherents" by upweighting those adherents that have similar characteristics as those non-adherent), allowing adherence to appear to be randomized with respect to the observed covariate distribution. So, in this pseudo-population everyone either adheres to treatment or not. 
 
 We can do this manually (using logistic regression models to predict the probability (=propensity) of treatment and then calculate the (un)stabilized weights) or estimate the weights on the PP population using the ipw package: https://cran.r-project.org/web/packages/ipw/index.html
 The package entails functions to estimate the probability to receive the observed treatment, based on individual characteristics. "ipwpoint" function is the function for point treatment situations. 
-Can calculate unstabilized and stabilized weights. Unstabilized weights are based on the inverse of the probability of receiving the observed treatment assignment. Stabilized weights take into account the fact that the estimated probabilities used in the calculation of unstabilized weights might not be very accurate, especially when treatment assignment is highly imbalanced or when the estimated probabilities are close to zero. Stabilized weights aim to reduce the variability and potential instability caused by extreme probabilities. 
-We will use the cluster-version of robust sandwich SE to correctly estimate the SE of the treatment effect estimate since there are multiple observations per participant.
+It can calculate unstabilized and stabilized weights. Unstabilized weights are based on the inverse of the probability of receiving the observed treatment assignment, i.e. be adherent in the respective arm. Stabilized weights take into account the fact that the estimated probabilities used in the calculation of unstabilized weights might not be very accurate, especially when treatment assignment is highly imbalanced or when the estimated probabilities are close to zero. Stabilized weights aim to reduce the variability and potential instability caused by extreme probabilities. 
+We will use the cluster-version of robust sandwich SE to correctly estimate the SE of the treatment effect estimate since there are multiple observations per participant (another option would be bootstrapping)
 
 
 ```r
@@ -1312,185 +1279,31 @@ summ(PP_unadj2, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
 </table>
 
 ```r
-# adjusted PP model, adjusted for all baseline covariates not only stratification factors // definition 2
-PP_adj_all <- df_ipw2 %>% 
-  glm(endpoint ~ arm + agegr_der + stsite_der2 + regimen_der2 + sex + scrvl 
-  # + whocur 
-  + wt + time_on_art_yrs + time_on_curr_art_yrs + fathervit + mothervit + travtim + travcost 
-  # + travmod 
-  # + stsite
-      ,
-              family = "binomial", data=.)
-summ(PP_adj_all, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
-```
+# # adjusted PP model, adjusted for all baseline covariates not only stratification factors // definition 2
+# PP_adj_all <- df_ipw2 %>% 
+#   glm(endpoint ~ arm + agegr_der + stsite_der2 + regimen_der2 + sex + scrvl 
+#   # + whocur 
+#   + wt + time_on_art_yrs + time_on_curr_art_yrs + fathervit + mothervit + travtim + travcost 
+#   # + travmod 
+#   # + stsite
+#       ,
+#               family = "binomial", data=.)
+# summ(PP_adj_all, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
 
-  <table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;border-bottom: 0;">
- <thead>
-  <tr>
-   <th style="text-align:left;">   </th>
-   <th style="text-align:right;"> exp(Est.) </th>
-   <th style="text-align:right;"> 2.5% </th>
-   <th style="text-align:right;"> 97.5% </th>
-   <th style="text-align:right;"> z val. </th>
-   <th style="text-align:right;"> p </th>
-  </tr>
- </thead>
-<tbody>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> (Intercept) </td>
-   <td style="text-align:right;"> 1.104 </td>
-   <td style="text-align:right;"> 0.341 </td>
-   <td style="text-align:right;"> 3.582 </td>
-   <td style="text-align:right;"> 0.166 </td>
-   <td style="text-align:right;"> 0.868 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> arm </td>
-   <td style="text-align:right;"> 0.746 </td>
-   <td style="text-align:right;"> 0.432 </td>
-   <td style="text-align:right;"> 1.290 </td>
-   <td style="text-align:right;"> -1.048 </td>
-   <td style="text-align:right;"> 0.295 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> agegr_der&gt;= 12 and 
-   </td>
-<td style="text-align:right;"> 1.993 </td>
-   <td style="text-align:right;"> 0.784 </td>
-   <td style="text-align:right;"> 5.066 </td>
-   <td style="text-align:right;"> 1.448 </td>
-   <td style="text-align:right;"> 0.147 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> stsite_der2Tanzania </td>
-   <td style="text-align:right;"> 1.425 </td>
-   <td style="text-align:right;"> 0.674 </td>
-   <td style="text-align:right;"> 3.015 </td>
-   <td style="text-align:right;"> 0.927 </td>
-   <td style="text-align:right;"> 0.354 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> regimen_der2NNRTI-based </td>
-   <td style="text-align:right;"> 0.716 </td>
-   <td style="text-align:right;"> 0.173 </td>
-   <td style="text-align:right;"> 2.959 </td>
-   <td style="text-align:right;"> -0.462 </td>
-   <td style="text-align:right;"> 0.644 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> regimen_der2PI-based </td>
-   <td style="text-align:right;"> 1.945 </td>
-   <td style="text-align:right;"> 0.851 </td>
-   <td style="text-align:right;"> 4.444 </td>
-   <td style="text-align:right;"> 1.577 </td>
-   <td style="text-align:right;"> 0.115 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> sexMale </td>
-   <td style="text-align:right;"> 1.439 </td>
-   <td style="text-align:right;"> 0.836 </td>
-   <td style="text-align:right;"> 2.474 </td>
-   <td style="text-align:right;"> 1.314 </td>
-   <td style="text-align:right;"> 0.189 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> scrvl </td>
-   <td style="text-align:right;"> 1.000 </td>
-   <td style="text-align:right;"> 1.000 </td>
-   <td style="text-align:right;"> 1.000 </td>
-   <td style="text-align:right;"> -0.932 </td>
-   <td style="text-align:right;"> 0.351 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> wt </td>
-   <td style="text-align:right;"> 0.982 </td>
-   <td style="text-align:right;"> 0.954 </td>
-   <td style="text-align:right;"> 1.011 </td>
-   <td style="text-align:right;"> -1.219 </td>
-   <td style="text-align:right;"> 0.223 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> time_on_art_yrs </td>
-   <td style="text-align:right;"> 0.981 </td>
-   <td style="text-align:right;"> 0.901 </td>
-   <td style="text-align:right;"> 1.069 </td>
-   <td style="text-align:right;"> -0.436 </td>
-   <td style="text-align:right;"> 0.663 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> time_on_curr_art_yrs </td>
-   <td style="text-align:right;"> 1.026 </td>
-   <td style="text-align:right;"> 0.887 </td>
-   <td style="text-align:right;"> 1.186 </td>
-   <td style="text-align:right;"> 0.343 </td>
-   <td style="text-align:right;"> 0.732 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> fathervitDead </td>
-   <td style="text-align:right;"> 1.027 </td>
-   <td style="text-align:right;"> 0.557 </td>
-   <td style="text-align:right;"> 1.895 </td>
-   <td style="text-align:right;"> 0.085 </td>
-   <td style="text-align:right;"> 0.932 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> fathervitUnknown </td>
-   <td style="text-align:right;"> 0.548 </td>
-   <td style="text-align:right;"> 0.195 </td>
-   <td style="text-align:right;"> 1.542 </td>
-   <td style="text-align:right;"> -1.140 </td>
-   <td style="text-align:right;"> 0.254 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> mothervitDead </td>
-   <td style="text-align:right;"> 0.764 </td>
-   <td style="text-align:right;"> 0.402 </td>
-   <td style="text-align:right;"> 1.450 </td>
-   <td style="text-align:right;"> -0.823 </td>
-   <td style="text-align:right;"> 0.410 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> mothervitUnknown </td>
-   <td style="text-align:right;"> 0.000 </td>
-   <td style="text-align:right;"> 0.000 </td>
-   <td style="text-align:right;"> Inf </td>
-   <td style="text-align:right;"> -0.016 </td>
-   <td style="text-align:right;"> 0.987 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> travtim </td>
-   <td style="text-align:right;"> 0.999 </td>
-   <td style="text-align:right;"> 0.993 </td>
-   <td style="text-align:right;"> 1.004 </td>
-   <td style="text-align:right;"> -0.492 </td>
-   <td style="text-align:right;"> 0.623 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> travcost </td>
-   <td style="text-align:right;"> 1.000 </td>
-   <td style="text-align:right;"> 1.000 </td>
-   <td style="text-align:right;"> 1.000 </td>
-   <td style="text-align:right;"> -1.073 </td>
-   <td style="text-align:right;"> 0.283 </td>
-  </tr>
-</tbody>
-<tfoot><tr><td style="padding: 0; " colspan="100%">
-<sup></sup> Standard errors: MLE</td></tr></tfoot>
-</table>
 
-```r
 ### Now, use IPW instead
 
 # with stabilized weights // definition 1
+# did not coverge with the following: cd4count, hepbres, regcursat, missyn, miss2dyn, care
 ipw_sw <- ipwpoint(exposure = arm,
   family = "binomial",  # arm is binary
   link = "logit",
   numerator = ~ 1,
   denominator = ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl 
-  # + whocur 
+  + whocur 
   + wt + time_on_art_yrs + time_on_curr_art_yrs + fathervit + mothervit + travtim + travcost 
-  # + travmod 
-  # + stsite
+  + travmod 
+  + stsite
   ,
   data = as.data.frame(df_ipw))
 
@@ -1499,7 +1312,7 @@ summary(ipw_sw$ipw.weights)
 
 ```
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##  0.5266  0.7834  0.9246  0.9967  1.1475  3.3200
+##  0.4788  0.7087  0.8842  0.9817  1.1058  3.8351
 ```
 
 ```r
@@ -1511,7 +1324,7 @@ ipwplot(weights = ipw_sw$ipw.weights, logscale = FALSE, main = "Stabilized weigh
 ```r
 df_ipw$sw <- ipw_sw$ipw.weights
 
-# use the weights in the outcome model
+# use the weights in the outcome model and use the robust sandwich estimator (HC0) for 95%CI
 PP_ipw_sw <- df_ipw %>% 
   glm(endpoint ~ arm, weights = sw,
               family = "binomial", data=.)
@@ -1532,19 +1345,19 @@ summ(PP_ipw_sw, exp = T, confint = T, model.info = F, model.fit = F, robust = "H
 <tbody>
   <tr>
    <td style="text-align:left;font-weight: bold;"> (Intercept) </td>
-   <td style="text-align:right;"> 0.95 </td>
-   <td style="text-align:right;"> 0.65 </td>
-   <td style="text-align:right;"> 1.38 </td>
-   <td style="text-align:right;"> -0.28 </td>
-   <td style="text-align:right;"> 0.78 </td>
+   <td style="text-align:right;"> 0.99 </td>
+   <td style="text-align:right;"> 0.67 </td>
+   <td style="text-align:right;"> 1.46 </td>
+   <td style="text-align:right;"> -0.05 </td>
+   <td style="text-align:right;"> 0.96 </td>
   </tr>
   <tr>
    <td style="text-align:left;font-weight: bold;"> arm </td>
-   <td style="text-align:right;"> 0.71 </td>
-   <td style="text-align:right;"> 0.41 </td>
-   <td style="text-align:right;"> 1.21 </td>
-   <td style="text-align:right;"> -1.26 </td>
-   <td style="text-align:right;"> 0.21 </td>
+   <td style="text-align:right;"> 0.68 </td>
+   <td style="text-align:right;"> 0.39 </td>
+   <td style="text-align:right;"> 1.20 </td>
+   <td style="text-align:right;"> -1.33 </td>
+   <td style="text-align:right;"> 0.18 </td>
   </tr>
 </tbody>
 <tfoot><tr><td style="padding: 0; " colspan="100%">
@@ -1558,10 +1371,10 @@ ipw_usw <- ipwpoint(exposure = arm,
   link = "logit",
   numerator = NULL,
   denominator = ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl 
-  # + whocur 
+   + whocur 
   + wt + time_on_art_yrs + time_on_curr_art_yrs + fathervit + mothervit + travtim + travcost 
-  # + travmod 
-  # + stsite
+   + travmod 
+   + stsite
   ,
   data = as.data.frame(df_ipw))
 
@@ -1570,7 +1383,7 @@ summary(ipw_usw$ipw.weights)
 
 ```
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##   1.010   1.552   1.819   1.993   2.267   6.934
+##   1.000   1.428   1.751   1.963   2.183   8.010
 ```
 
 ```r
@@ -1603,19 +1416,19 @@ summ(PP_ipw_usw, exp = T, confint = T, model.info = F, model.fit = F, robust = "
 <tbody>
   <tr>
    <td style="text-align:left;font-weight: bold;"> (Intercept) </td>
-   <td style="text-align:right;"> 0.95 </td>
-   <td style="text-align:right;"> 0.65 </td>
-   <td style="text-align:right;"> 1.38 </td>
-   <td style="text-align:right;"> -0.28 </td>
-   <td style="text-align:right;"> 0.78 </td>
+   <td style="text-align:right;"> 0.99 </td>
+   <td style="text-align:right;"> 0.67 </td>
+   <td style="text-align:right;"> 1.46 </td>
+   <td style="text-align:right;"> -0.05 </td>
+   <td style="text-align:right;"> 0.96 </td>
   </tr>
   <tr>
    <td style="text-align:left;font-weight: bold;"> arm </td>
-   <td style="text-align:right;"> 0.71 </td>
-   <td style="text-align:right;"> 0.41 </td>
-   <td style="text-align:right;"> 1.21 </td>
-   <td style="text-align:right;"> -1.26 </td>
-   <td style="text-align:right;"> 0.21 </td>
+   <td style="text-align:right;"> 0.68 </td>
+   <td style="text-align:right;"> 0.39 </td>
+   <td style="text-align:right;"> 1.20 </td>
+   <td style="text-align:right;"> -1.33 </td>
+   <td style="text-align:right;"> 0.18 </td>
   </tr>
 </tbody>
 <tfoot><tr><td style="padding: 0; " colspan="100%">
@@ -1629,10 +1442,10 @@ ipw_sw2 <- ipwpoint(exposure = arm,
   link = "logit",
   numerator = ~ 1,
   denominator = ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl 
-  # + whocur 
+   + whocur 
   + wt + time_on_art_yrs + time_on_curr_art_yrs + fathervit + mothervit + travtim + travcost 
-  # + travmod 
-  # + stsite
+   + travmod 
+   + stsite
   ,
   data = as.data.frame(df_ipw2))
 
@@ -1641,7 +1454,7 @@ summary(ipw_sw2$ipw.weights)
 
 ```
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##  0.5246  0.7918  0.9250  0.9962  1.1483  3.0654
+##  0.4815  0.7119  0.8896  0.9813  1.1240  3.4375
 ```
 
 ```r
@@ -1674,19 +1487,19 @@ summ(PP_ipw_sw2, exp = T, confint = T, model.info = F, model.fit = F, robust = "
 <tbody>
   <tr>
    <td style="text-align:left;font-weight: bold;"> (Intercept) </td>
-   <td style="text-align:right;"> 1.02 </td>
-   <td style="text-align:right;"> 0.71 </td>
-   <td style="text-align:right;"> 1.46 </td>
-   <td style="text-align:right;"> 0.08 </td>
-   <td style="text-align:right;"> 0.93 </td>
+   <td style="text-align:right;"> 1.07 </td>
+   <td style="text-align:right;"> 0.73 </td>
+   <td style="text-align:right;"> 1.55 </td>
+   <td style="text-align:right;"> 0.33 </td>
+   <td style="text-align:right;"> 0.74 </td>
   </tr>
   <tr>
    <td style="text-align:left;font-weight: bold;"> arm </td>
-   <td style="text-align:right;"> 0.73 </td>
-   <td style="text-align:right;"> 0.43 </td>
-   <td style="text-align:right;"> 1.23 </td>
-   <td style="text-align:right;"> -1.19 </td>
-   <td style="text-align:right;"> 0.23 </td>
+   <td style="text-align:right;"> 0.69 </td>
+   <td style="text-align:right;"> 0.40 </td>
+   <td style="text-align:right;"> 1.19 </td>
+   <td style="text-align:right;"> -1.34 </td>
+   <td style="text-align:right;"> 0.18 </td>
   </tr>
 </tbody>
 <tfoot><tr><td style="padding: 0; " colspan="100%">
@@ -1700,10 +1513,10 @@ ipw_usw2 <- ipwpoint(exposure = arm,
   link = "logit",
   numerator = NULL,
   denominator = ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl 
-  # + whocur 
+   + whocur 
   + wt + time_on_art_yrs + time_on_curr_art_yrs + fathervit + mothervit + travtim + travcost 
-  # + travmod 
-  # + stsite
+   + travmod 
+   + stsite
   ,
   data = as.data.frame(df_ipw2))
 
@@ -1712,7 +1525,7 @@ summary(ipw_usw2$ipw.weights)
 
 ```
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##   1.012   1.568   1.848   1.992   2.327   6.367
+##   1.000   1.444   1.788   1.963   2.241   7.139
 ```
 
 ```r
@@ -1745,19 +1558,19 @@ summ(PP_ipw_usw2, exp = T, confint = T, model.info = F, model.fit = F, robust = 
 <tbody>
   <tr>
    <td style="text-align:left;font-weight: bold;"> (Intercept) </td>
-   <td style="text-align:right;"> 1.02 </td>
-   <td style="text-align:right;"> 0.71 </td>
-   <td style="text-align:right;"> 1.46 </td>
-   <td style="text-align:right;"> 0.08 </td>
-   <td style="text-align:right;"> 0.93 </td>
+   <td style="text-align:right;"> 1.07 </td>
+   <td style="text-align:right;"> 0.73 </td>
+   <td style="text-align:right;"> 1.55 </td>
+   <td style="text-align:right;"> 0.33 </td>
+   <td style="text-align:right;"> 0.74 </td>
   </tr>
   <tr>
    <td style="text-align:left;font-weight: bold;"> arm </td>
-   <td style="text-align:right;"> 0.73 </td>
-   <td style="text-align:right;"> 0.43 </td>
-   <td style="text-align:right;"> 1.23 </td>
-   <td style="text-align:right;"> -1.19 </td>
-   <td style="text-align:right;"> 0.23 </td>
+   <td style="text-align:right;"> 0.69 </td>
+   <td style="text-align:right;"> 0.40 </td>
+   <td style="text-align:right;"> 1.19 </td>
+   <td style="text-align:right;"> -1.34 </td>
+   <td style="text-align:right;"> 0.18 </td>
   </tr>
 </tbody>
 <tfoot><tr><td style="padding: 0; " colspan="100%">
@@ -1767,207 +1580,11 @@ summ(PP_ipw_usw2, exp = T, confint = T, model.info = F, model.fit = F, robust = 
 ```r
 ### check model and ipw weights
 ## check multicollinearity of the model used in ipwpoint:
-ipw.model <- glm(arm ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl + whocur + wt + time_on_art_yrs + time_on_curr_art_yrs + fathervit + mothervit + travtim + travcost + travmod 
-                 # + stsite
-              , family = "binomial", data=df_ipw2)
-summ(ipw.model, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
-```
+# ipw.model <- glm(arm ~ agegr_der + stsite_der2 + regimen_der2 + sex + scrvl + whocur + wt + time_on_art_yrs + time_on_curr_art_yrs + fathervit + mothervit + travtim + travcost + travmod 
+#                   + stsite
+#               , family = "binomial", data=df_ipw2)
+# summ(ipw.model, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
 
-  <table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;border-bottom: 0;">
- <thead>
-  <tr>
-   <th style="text-align:left;">   </th>
-   <th style="text-align:right;"> exp(Est.) </th>
-   <th style="text-align:right;"> 2.5% </th>
-   <th style="text-align:right;"> 97.5% </th>
-   <th style="text-align:right;"> z val. </th>
-   <th style="text-align:right;"> p </th>
-  </tr>
- </thead>
-<tbody>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> (Intercept) </td>
-   <td style="text-align:right;"> 1.481 </td>
-   <td style="text-align:right;"> 0.000 </td>
-   <td style="text-align:right;"> Inf </td>
-   <td style="text-align:right;"> 0.001 </td>
-   <td style="text-align:right;"> 1.000 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> agegr_der&gt;= 12 and 
-   </td>
-<td style="text-align:right;"> 2.280 </td>
-   <td style="text-align:right;"> 0.856 </td>
-   <td style="text-align:right;"> 6.077 </td>
-   <td style="text-align:right;"> 1.648 </td>
-   <td style="text-align:right;"> 0.099 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> stsite_der2Tanzania </td>
-   <td style="text-align:right;"> 1.484 </td>
-   <td style="text-align:right;"> 0.617 </td>
-   <td style="text-align:right;"> 3.569 </td>
-   <td style="text-align:right;"> 0.882 </td>
-   <td style="text-align:right;"> 0.378 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> regimen_der2NNRTI-based </td>
-   <td style="text-align:right;"> 1.382 </td>
-   <td style="text-align:right;"> 0.327 </td>
-   <td style="text-align:right;"> 5.847 </td>
-   <td style="text-align:right;"> 0.440 </td>
-   <td style="text-align:right;"> 0.660 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> regimen_der2PI-based </td>
-   <td style="text-align:right;"> 0.996 </td>
-   <td style="text-align:right;"> 0.422 </td>
-   <td style="text-align:right;"> 2.350 </td>
-   <td style="text-align:right;"> -0.010 </td>
-   <td style="text-align:right;"> 0.992 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> sexMale </td>
-   <td style="text-align:right;"> 1.516 </td>
-   <td style="text-align:right;"> 0.869 </td>
-   <td style="text-align:right;"> 2.642 </td>
-   <td style="text-align:right;"> 1.466 </td>
-   <td style="text-align:right;"> 0.143 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> scrvl </td>
-   <td style="text-align:right;"> 1.000 </td>
-   <td style="text-align:right;"> 1.000 </td>
-   <td style="text-align:right;"> 1.000 </td>
-   <td style="text-align:right;"> -1.033 </td>
-   <td style="text-align:right;"> 0.302 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> whocur.L </td>
-   <td style="text-align:right;"> 2268.192 </td>
-   <td style="text-align:right;"> 0.000 </td>
-   <td style="text-align:right;"> Inf </td>
-   <td style="text-align:right;"> 0.005 </td>
-   <td style="text-align:right;"> 0.996 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> whocur.Q </td>
-   <td style="text-align:right;"> 11261010.525 </td>
-   <td style="text-align:right;"> 0.000 </td>
-   <td style="text-align:right;"> Inf </td>
-   <td style="text-align:right;"> 0.012 </td>
-   <td style="text-align:right;"> 0.991 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> whocur.C </td>
-   <td style="text-align:right;"> 6730348.880 </td>
-   <td style="text-align:right;"> 0.000 </td>
-   <td style="text-align:right;"> Inf </td>
-   <td style="text-align:right;"> 0.015 </td>
-   <td style="text-align:right;"> 0.988 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> wt </td>
-   <td style="text-align:right;"> 0.971 </td>
-   <td style="text-align:right;"> 0.942 </td>
-   <td style="text-align:right;"> 1.001 </td>
-   <td style="text-align:right;"> -1.874 </td>
-   <td style="text-align:right;"> 0.061 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> time_on_art_yrs </td>
-   <td style="text-align:right;"> 0.959 </td>
-   <td style="text-align:right;"> 0.877 </td>
-   <td style="text-align:right;"> 1.048 </td>
-   <td style="text-align:right;"> -0.924 </td>
-   <td style="text-align:right;"> 0.355 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> time_on_curr_art_yrs </td>
-   <td style="text-align:right;"> 1.032 </td>
-   <td style="text-align:right;"> 0.890 </td>
-   <td style="text-align:right;"> 1.197 </td>
-   <td style="text-align:right;"> 0.416 </td>
-   <td style="text-align:right;"> 0.677 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> fathervitDead </td>
-   <td style="text-align:right;"> 0.936 </td>
-   <td style="text-align:right;"> 0.496 </td>
-   <td style="text-align:right;"> 1.768 </td>
-   <td style="text-align:right;"> -0.203 </td>
-   <td style="text-align:right;"> 0.839 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> fathervitUnknown </td>
-   <td style="text-align:right;"> 1.176 </td>
-   <td style="text-align:right;"> 0.436 </td>
-   <td style="text-align:right;"> 3.169 </td>
-   <td style="text-align:right;"> 0.320 </td>
-   <td style="text-align:right;"> 0.749 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> mothervitDead </td>
-   <td style="text-align:right;"> 2.024 </td>
-   <td style="text-align:right;"> 1.051 </td>
-   <td style="text-align:right;"> 3.897 </td>
-   <td style="text-align:right;"> 2.109 </td>
-   <td style="text-align:right;"> 0.035 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> mothervitUnknown </td>
-   <td style="text-align:right;"> 1.820 </td>
-   <td style="text-align:right;"> 0.094 </td>
-   <td style="text-align:right;"> 35.112 </td>
-   <td style="text-align:right;"> 0.397 </td>
-   <td style="text-align:right;"> 0.692 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> travtim </td>
-   <td style="text-align:right;"> 1.000 </td>
-   <td style="text-align:right;"> 0.994 </td>
-   <td style="text-align:right;"> 1.005 </td>
-   <td style="text-align:right;"> -0.151 </td>
-   <td style="text-align:right;"> 0.880 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> travcost </td>
-   <td style="text-align:right;"> 1.000 </td>
-   <td style="text-align:right;"> 1.000 </td>
-   <td style="text-align:right;"> 1.000 </td>
-   <td style="text-align:right;"> -2.118 </td>
-   <td style="text-align:right;"> 0.034 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> travmodRide (horse/donkey) </td>
-   <td style="text-align:right;"> 28853396.137 </td>
-   <td style="text-align:right;"> 0.000 </td>
-   <td style="text-align:right;"> Inf </td>
-   <td style="text-align:right;"> 0.007 </td>
-   <td style="text-align:right;"> 0.994 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> travmodTaxi / public transport </td>
-   <td style="text-align:right;"> 1.798 </td>
-   <td style="text-align:right;"> 0.140 </td>
-   <td style="text-align:right;"> 23.005 </td>
-   <td style="text-align:right;"> 0.451 </td>
-   <td style="text-align:right;"> 0.652 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> travmodWalk </td>
-   <td style="text-align:right;"> 0.000 </td>
-   <td style="text-align:right;"> 0.000 </td>
-   <td style="text-align:right;"> Inf </td>
-   <td style="text-align:right;"> -0.010 </td>
-   <td style="text-align:right;"> 0.992 </td>
-  </tr>
-</tbody>
-<tfoot><tr><td style="padding: 0; " colspan="100%">
-<sup></sup> Standard errors: MLE</td></tr></tfoot>
-</table>
-
-```r
 # ipw.model <- glm(arm ~ agegr_der 
 #                 + stsite_der2 
 #                 + regimen_der2 
@@ -1992,37 +1609,17 @@ summ(ipw.model, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
 #               , family = "binomial", data=df_ipw)
 # summ(ipw.model, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
 
-# Calculate Variance Inflation Factor values
-vif_values <- vif(ipw.model) # VIF = 1 / (1 - R²). "There are aliased coefficients in the model" = perfect multicollinearity // VIF values exceeding 5 or 10 are often considered indicative of significant multicollinearity
-print(vif_values)
-```
+# # Calculate Variance Inflation Factor values
+# vif_values <- vif(ipw.model) # VIF = 1 / (1 - R²). "There are aliased coefficients in the model" = perfect multicollinearity // VIF values exceeding 5 or 10 are often considered indicative of significant multicollinearity
+# print(vif_values)
 
-```
-##                          GVIF Df GVIF^(1/(2*Df))
-## agegr_der            3.222416  1        1.795109
-## stsite_der2          1.981566  1        1.407681
-## regimen_der2         2.716006  2        1.283757
-## sex                  1.064541  1        1.031766
-## scrvl                1.061510  1        1.030296
-## whocur               1.089404  3        1.014374
-## wt                   3.226488  1        1.796243
-## time_on_art_yrs      1.835089  1        1.354655
-## time_on_curr_art_yrs 1.922070  1        1.386387
-## fathervit            1.254079  2        1.058233
-## mothervit            1.338371  2        1.075583
-## travtim              1.242146  1        1.114516
-## travcost             2.040031  1        1.428297
-## travmod              1.109651  3        1.017492
-```
-
-```r
 ## check the summary of the unstabilized weights:
 round(summary(df_ipw2$usw), 3)
 ```
 
 ```
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##   1.012   1.568   1.848   1.992   2.327   6.367
+##   1.000   1.444   1.788   1.963   2.241   7.139
 ```
 
 ```r
@@ -2032,7 +1629,7 @@ round(summary(df_ipw2$sw), 3)
 
 ```
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##   0.525   0.792   0.925   0.996   1.148   3.065
+##   0.481   0.712   0.890   0.981   1.124   3.438
 ```
 
 ```r
@@ -2051,15 +1648,9 @@ design.stab <- svydesign(ids = ~scrno, weights = ~sw, data = df_ipw2)
 covariates <- c("agegr_der","stsite_der2","regimen_der2",
                  "sex","scrvl",
                 "whocur",
-                # + cd4count 
-                # + hepbres 
                   "wt",
                   "time_on_art_yrs", 
                   "time_on_curr_art_yrs" ,
-                #  + regcursat 
-                # + missyn 
-                # + miss2dyn 
-                # + care 
                   "fathervit","mothervit", 
                   "travtim","travcost"
                 , "travmod"
@@ -2073,96 +1664,96 @@ print(tab.unstab, smd = T)
 ```
 ##                                                 Stratified by arm
 ##                                                  0                    
-##   n                                                  242.7            
-##   agegr_der = >= 12 and < 19 (%)                     147.2 (60.7)     
-##   stsite_der2 = Tanzania (%)                          67.7 (27.9)     
+##   n                                                  238.2            
+##   agegr_der = >= 12 and < 19 (%)                     145.8 (61.2)     
+##   stsite_der2 = Tanzania (%)                          66.5 (27.9)     
 ##   regimen_der2 (%)                                                    
-##      INSTI-based                                     146.2 (60.2)     
-##      NNRTI-based                                      10.9 ( 4.5)     
-##      PI-based                                         85.6 (35.3)     
-##   sex = Male (%)                                     108.7 (44.8)     
-##   scrvl (mean (SD))                              114076.87 (746208.32)
+##      INSTI-based                                     147.3 (61.8)     
+##      NNRTI-based                                       9.4 ( 4.0)     
+##      PI-based                                         81.4 (34.2)     
+##   sex = Male (%)                                     108.8 (45.7)     
+##   scrvl (mean (SD))                              113052.15 (726672.90)
 ##   whocur (%)                                                          
-##      T1                                              235.8 (97.2)     
-##      T2                                                1.5 ( 0.6)     
-##      T3                                                5.4 ( 2.2)     
+##      T1                                              232.8 (97.8)     
+##      T2                                                2.3 ( 1.0)     
+##      T3                                                3.0 ( 1.3)     
 ##      T4                                                0.0 ( 0.0)     
-##   wt (mean (SD))                                     34.55 (16.00)    
-##   time_on_art_yrs (mean (SD))                         6.93 (3.92)     
-##   time_on_curr_art_yrs (mean (SD))                    2.60 (2.31)     
+##   wt (mean (SD))                                     34.90 (16.14)    
+##   time_on_art_yrs (mean (SD))                         7.07 (3.94)     
+##   time_on_curr_art_yrs (mean (SD))                    2.60 (2.30)     
 ##   fathervit (%)                                                       
-##      Alive                                           143.3 (59.0)     
-##      Dead                                             79.0 (32.5)     
-##      Unknown                                          20.5 ( 8.4)     
+##      Alive                                           136.9 (57.5)     
+##      Dead                                             80.5 (33.8)     
+##      Unknown                                          20.7 ( 8.7)     
 ##   mothervit (%)                                                       
-##      Alive                                           170.5 (70.2)     
-##      Dead                                             69.8 (28.7)     
-##      Unknown                                           2.4 ( 1.0)     
-##   travtim (mean (SD))                                68.48 (57.50)    
-##   travcost (mean (SD))                             1678.05 (4664.27)  
+##      Alive                                           167.0 (70.1)     
+##      Dead                                             69.0 (29.0)     
+##      Unknown                                           2.1 ( 0.9)     
+##   travtim (mean (SD))                                68.87 (57.18)    
+##   travcost (mean (SD))                             1682.37 (4699.55)  
 ##   travmod (%)                                                         
 ##      Bicycle                                           0.0 ( 0.0)     
-##      Private motorised vehicle (own or borrowed)       3.3 ( 1.4)     
+##      Private motorised vehicle (own or borrowed)       2.9 ( 1.2)     
 ##      Ride (horse/donkey)                               0.0 ( 0.0)     
-##      Taxi / public transport                         235.4 (97.0)     
-##      Walk                                              4.0 ( 1.6)     
+##      Taxi / public transport                         233.3 (97.9)     
+##      Walk                                              2.0 ( 0.8)     
 ##   stsite (%)                                                          
-##      Baylor Clinic Butha-Buthe                        51.2 (21.1)     
-##      Baylor Clinic Hlotse                             34.9 (14.4)     
-##      Baylor Clinic Maseru                             27.5 (11.3)     
-##      Baylor Clinic Mohale's Hoek                       9.5 ( 3.9)     
-##      Baylor Clinic Mokhotlong                         32.4 (13.3)     
-##      Ifakara One-Stop Clinic                          34.4 (14.2)     
-##      Mbagala Rangi Tatu Hospital                      14.7 ( 6.1)     
-##      Seboche Mission Hospital                         19.5 ( 8.0)     
-##      Temeke Regional Referral Hospital                 5.0 ( 2.1)     
-##      Upendano Dispensary                              13.5 ( 5.6)     
+##      Baylor Clinic Butha-Buthe                        49.6 (20.8)     
+##      Baylor Clinic Hlotse                             36.8 (15.4)     
+##      Baylor Clinic Maseru                             31.0 (13.0)     
+##      Baylor Clinic Mohale's Hoek                      12.4 ( 5.2)     
+##      Baylor Clinic Mokhotlong                         26.4 (11.1)     
+##      Ifakara One-Stop Clinic                          31.8 (13.4)     
+##      Mbagala Rangi Tatu Hospital                      12.0 ( 5.0)     
+##      Seboche Mission Hospital                         15.4 ( 6.5)     
+##      Temeke Regional Referral Hospital                10.3 ( 4.3)     
+##      Upendano Dispensary                              12.4 ( 5.2)     
 ##                                                 Stratified by arm
 ##                                                  1                    SMD   
-##   n                                                 241.4                   
-##   agegr_der = >= 12 and < 19 (%)                    147.1 (60.9)       0.006
-##   stsite_der2 = Tanzania (%)                         67.4 (27.9)      <0.001
-##   regimen_der2 (%)                                                     0.009
-##      INSTI-based                                    145.2 (60.2)            
-##      NNRTI-based                                     11.3 ( 4.7)            
-##      PI-based                                        84.9 (35.2)            
-##   sex = Male (%)                                    105.6 (43.7)       0.021
-##   scrvl (mean (SD))                              90243.32 (391504.42)  0.040
-##   whocur (%)                                                           0.298
-##      T1                                             233.0 (96.5)            
-##      T2                                               5.5 ( 2.3)            
+##   n                                                 238.8                   
+##   agegr_der = >= 12 and < 19 (%)                    145.1 (60.8)       0.009
+##   stsite_der2 = Tanzania (%)                         63.4 (26.5)       0.031
+##   regimen_der2 (%)                                                     0.024
+##      INSTI-based                                    147.2 (61.6)            
+##      NNRTI-based                                     10.6 ( 4.4)            
+##      PI-based                                        81.0 (33.9)            
+##   sex = Male (%)                                    106.4 (44.6)       0.022
+##   scrvl (mean (SD))                              79627.06 (358891.33)  0.058
+##   whocur (%)                                                           0.192
+##      T1                                             234.0 (98.0)            
+##      T2                                               3.7 ( 1.6)            
 ##      T3                                               0.0 ( 0.0)            
-##      T4                                               2.9 ( 1.2)            
-##   wt (mean (SD))                                    34.44 (15.38)      0.007
-##   time_on_art_yrs (mean (SD))                        6.92 (4.36)       0.002
-##   time_on_curr_art_yrs (mean (SD))                   2.62 (2.55)       0.011
-##   fathervit (%)                                                        0.011
-##      Alive                                          143.7 (59.5)            
-##      Dead                                            77.9 (32.3)            
-##      Unknown                                         19.8 ( 8.2)            
-##   mothervit (%)                                                        0.009
-##      Alive                                          168.6 (69.8)            
-##      Dead                                            70.4 (29.1)            
-##      Unknown                                          2.4 ( 1.0)            
-##   travtim (mean (SD))                               67.49 (45.94)      0.019
-##   travcost (mean (SD))                            1483.60 (3401.47)    0.048
-##   travmod (%)                                                          0.229
+##      T4                                               1.0 ( 0.4)            
+##   wt (mean (SD))                                    34.73 (15.34)      0.010
+##   time_on_art_yrs (mean (SD))                        7.01 (4.28)       0.014
+##   time_on_curr_art_yrs (mean (SD))                   2.63 (2.55)       0.011
+##   fathervit (%)                                                        0.006
+##      Alive                                          136.7 (57.3)            
+##      Dead                                            80.9 (33.9)            
+##      Unknown                                         21.2 ( 8.9)            
+##   mothervit (%)                                                        0.012
+##      Alive                                          166.2 (69.6)            
+##      Dead                                            70.5 (29.5)            
+##      Unknown                                          2.1 ( 0.9)            
+##   travtim (mean (SD))                               68.29 (46.00)      0.011
+##   travcost (mean (SD))                            1482.42 (3455.42)    0.048
+##   travmod (%)                                                          0.160
 ##      Bicycle                                          0.0 ( 0.0)            
-##      Private motorised vehicle (own or borrowed)      2.1 ( 0.9)            
-##      Ride (horse/donkey)                              2.0 ( 0.8)            
-##      Taxi / public transport                        237.3 (98.3)            
+##      Private motorised vehicle (own or borrowed)      2.6 ( 1.1)            
+##      Ride (horse/donkey)                              1.0 ( 0.4)            
+##      Taxi / public transport                        235.2 (98.5)            
 ##      Walk                                             0.0 ( 0.0)            
-##   stsite (%)                                                           0.362
-##      Baylor Clinic Butha-Buthe                       52.1 (21.6)            
-##      Baylor Clinic Hlotse                            37.7 (15.6)            
-##      Baylor Clinic Maseru                            32.6 (13.5)            
-##      Baylor Clinic Mohale's Hoek                     16.2 ( 6.7)            
-##      Baylor Clinic Mokhotlong                        21.4 ( 8.9)            
-##      Ifakara One-Stop Clinic                         30.1 (12.5)            
-##      Mbagala Rangi Tatu Hospital                      8.1 ( 3.4)            
-##      Seboche Mission Hospital                        14.0 ( 5.8)            
-##      Temeke Regional Referral Hospital               18.2 ( 7.5)            
-##      Upendano Dispensary                             11.0 ( 4.5)
+##   stsite (%)                                                           0.042
+##      Baylor Clinic Butha-Buthe                       50.9 (21.3)            
+##      Baylor Clinic Hlotse                            36.9 (15.5)            
+##      Baylor Clinic Maseru                            30.2 (12.7)            
+##      Baylor Clinic Mohale's Hoek                     12.7 ( 5.3)            
+##      Baylor Clinic Mokhotlong                        28.0 (11.7)            
+##      Ifakara One-Stop Clinic                         30.3 (12.7)            
+##      Mbagala Rangi Tatu Hospital                     11.0 ( 4.6)            
+##      Seboche Mission Hospital                        16.6 ( 6.9)            
+##      Temeke Regional Referral Hospital               10.1 ( 4.2)            
+##      Upendano Dispensary                             12.0 ( 5.0)
 ```
 
 ```r
@@ -2173,96 +1764,96 @@ print(tab.stab, smd = T)
 ```
 ##                                                 Stratified by arm
 ##                                                  0                    
-##   n                                                  125.8            
-##   agegr_der = >= 12 and < 19 (%)                      76.3 (60.7)     
-##   stsite_der2 = Tanzania (%)                          35.1 (27.9)     
+##   n                                                  123.5            
+##   agegr_der = >= 12 and < 19 (%)                      75.6 (61.2)     
+##   stsite_der2 = Tanzania (%)                          34.5 (27.9)     
 ##   regimen_der2 (%)                                                    
-##      INSTI-based                                      75.8 (60.2)     
-##      NNRTI-based                                       5.6 ( 4.5)     
-##      PI-based                                         44.4 (35.3)     
-##   sex = Male (%)                                      56.4 (44.8)     
-##   scrvl (mean (SD))                              114076.87 (746208.32)
+##      INSTI-based                                      76.4 (61.8)     
+##      NNRTI-based                                       4.9 ( 4.0)     
+##      PI-based                                         42.2 (34.2)     
+##   sex = Male (%)                                      56.4 (45.7)     
+##   scrvl (mean (SD))                              113052.15 (726672.90)
 ##   whocur (%)                                                          
-##      T1                                              122.3 (97.2)     
-##      T2                                                0.8 ( 0.6)     
-##      T3                                                2.8 ( 2.2)     
+##      T1                                              120.7 (97.8)     
+##      T2                                                1.2 ( 1.0)     
+##      T3                                                1.6 ( 1.3)     
 ##      T4                                                0.0 ( 0.0)     
-##   wt (mean (SD))                                     34.55 (16.00)    
-##   time_on_art_yrs (mean (SD))                         6.93 (3.92)     
-##   time_on_curr_art_yrs (mean (SD))                    2.60 (2.31)     
+##   wt (mean (SD))                                     34.90 (16.14)    
+##   time_on_art_yrs (mean (SD))                         7.07 (3.94)     
+##   time_on_curr_art_yrs (mean (SD))                    2.60 (2.30)     
 ##   fathervit (%)                                                       
-##      Alive                                            74.3 (59.0)     
-##      Dead                                             41.0 (32.5)     
-##      Unknown                                          10.6 ( 8.4)     
+##      Alive                                            71.0 (57.5)     
+##      Dead                                             41.8 (33.8)     
+##      Unknown                                          10.7 ( 8.7)     
 ##   mothervit (%)                                                       
-##      Alive                                            88.4 (70.2)     
-##      Dead                                             36.2 (28.7)     
-##      Unknown                                           1.3 ( 1.0)     
-##   travtim (mean (SD))                                68.48 (57.50)    
-##   travcost (mean (SD))                             1678.05 (4664.27)  
+##      Alive                                            86.6 (70.1)     
+##      Dead                                             35.8 (29.0)     
+##      Unknown                                           1.1 ( 0.9)     
+##   travtim (mean (SD))                                68.87 (57.18)    
+##   travcost (mean (SD))                             1682.37 (4699.55)  
 ##   travmod (%)                                                         
 ##      Bicycle                                           0.0 ( 0.0)     
-##      Private motorised vehicle (own or borrowed)       1.7 ( 1.4)     
+##      Private motorised vehicle (own or borrowed)       1.5 ( 1.2)     
 ##      Ride (horse/donkey)                               0.0 ( 0.0)     
-##      Taxi / public transport                         122.0 (97.0)     
-##      Walk                                              2.1 ( 1.6)     
+##      Taxi / public transport                         120.9 (97.9)     
+##      Walk                                              1.0 ( 0.8)     
 ##   stsite (%)                                                          
-##      Baylor Clinic Butha-Buthe                        26.6 (21.1)     
-##      Baylor Clinic Hlotse                             18.1 (14.4)     
-##      Baylor Clinic Maseru                             14.3 (11.3)     
-##      Baylor Clinic Mohale's Hoek                       4.9 ( 3.9)     
-##      Baylor Clinic Mokhotlong                         16.8 (13.3)     
-##      Ifakara One-Stop Clinic                          17.9 (14.2)     
-##      Mbagala Rangi Tatu Hospital                       7.6 ( 6.1)     
-##      Seboche Mission Hospital                         10.1 ( 8.0)     
-##      Temeke Regional Referral Hospital                 2.6 ( 2.1)     
-##      Upendano Dispensary                               7.0 ( 5.6)     
+##      Baylor Clinic Butha-Buthe                        25.7 (20.8)     
+##      Baylor Clinic Hlotse                             19.1 (15.4)     
+##      Baylor Clinic Maseru                             16.1 (13.0)     
+##      Baylor Clinic Mohale's Hoek                       6.4 ( 5.2)     
+##      Baylor Clinic Mokhotlong                         13.7 (11.1)     
+##      Ifakara One-Stop Clinic                          16.5 (13.4)     
+##      Mbagala Rangi Tatu Hospital                       6.2 ( 5.0)     
+##      Seboche Mission Hospital                          8.0 ( 6.5)     
+##      Temeke Regional Referral Hospital                 5.3 ( 4.3)     
+##      Upendano Dispensary                               6.4 ( 5.2)     
 ##                                                 Stratified by arm
 ##                                                  1                    SMD   
-##   n                                                 116.2                   
-##   agegr_der = >= 12 and < 19 (%)                     70.8 (60.9)       0.006
-##   stsite_der2 = Tanzania (%)                         32.4 (27.9)      <0.001
-##   regimen_der2 (%)                                                     0.009
-##      INSTI-based                                     69.9 (60.2)            
-##      NNRTI-based                                      5.4 ( 4.7)            
-##      PI-based                                        40.9 (35.2)            
-##   sex = Male (%)                                     50.9 (43.7)       0.021
-##   scrvl (mean (SD))                              90243.32 (391504.42)  0.040
-##   whocur (%)                                                           0.298
-##      T1                                             112.2 (96.5)            
-##      T2                                               2.7 ( 2.3)            
+##   n                                                 115.0                   
+##   agegr_der = >= 12 and < 19 (%)                     69.9 (60.8)       0.009
+##   stsite_der2 = Tanzania (%)                         30.5 (26.5)       0.031
+##   regimen_der2 (%)                                                     0.024
+##      INSTI-based                                     70.9 (61.6)            
+##      NNRTI-based                                      5.1 ( 4.4)            
+##      PI-based                                        39.0 (33.9)            
+##   sex = Male (%)                                     51.2 (44.6)       0.022
+##   scrvl (mean (SD))                              79627.06 (358891.33)  0.058
+##   whocur (%)                                                           0.192
+##      T1                                             112.7 (98.0)            
+##      T2                                               1.8 ( 1.6)            
 ##      T3                                               0.0 ( 0.0)            
-##      T4                                               1.4 ( 1.2)            
-##   wt (mean (SD))                                    34.44 (15.38)      0.007
-##   time_on_art_yrs (mean (SD))                        6.92 (4.36)       0.002
-##   time_on_curr_art_yrs (mean (SD))                   2.62 (2.55)       0.011
-##   fathervit (%)                                                        0.011
-##      Alive                                           69.2 (59.5)            
-##      Dead                                            37.5 (32.3)            
-##      Unknown                                          9.6 ( 8.2)            
-##   mothervit (%)                                                        0.009
-##      Alive                                           81.2 (69.8)            
-##      Dead                                            33.9 (29.1)            
-##      Unknown                                          1.2 ( 1.0)            
-##   travtim (mean (SD))                               67.49 (45.94)      0.019
-##   travcost (mean (SD))                            1483.60 (3401.47)    0.048
-##   travmod (%)                                                          0.229
+##      T4                                               0.5 ( 0.4)            
+##   wt (mean (SD))                                    34.73 (15.34)      0.010
+##   time_on_art_yrs (mean (SD))                        7.01 (4.28)       0.014
+##   time_on_curr_art_yrs (mean (SD))                   2.63 (2.55)       0.011
+##   fathervit (%)                                                        0.006
+##      Alive                                           65.8 (57.3)            
+##      Dead                                            39.0 (33.9)            
+##      Unknown                                         10.2 ( 8.9)            
+##   mothervit (%)                                                        0.012
+##      Alive                                           80.0 (69.6)            
+##      Dead                                            33.9 (29.5)            
+##      Unknown                                          1.0 ( 0.9)            
+##   travtim (mean (SD))                               68.29 (46.00)      0.011
+##   travcost (mean (SD))                            1482.42 (3455.42)    0.048
+##   travmod (%)                                                          0.160
 ##      Bicycle                                          0.0 ( 0.0)            
-##      Private motorised vehicle (own or borrowed)      1.0 ( 0.9)            
-##      Ride (horse/donkey)                              1.0 ( 0.8)            
-##      Taxi / public transport                        114.3 (98.3)            
+##      Private motorised vehicle (own or borrowed)      1.3 ( 1.1)            
+##      Ride (horse/donkey)                              0.5 ( 0.4)            
+##      Taxi / public transport                        113.2 (98.5)            
 ##      Walk                                             0.0 ( 0.0)            
-##   stsite (%)                                                           0.362
-##      Baylor Clinic Butha-Buthe                       25.1 (21.6)            
-##      Baylor Clinic Hlotse                            18.2 (15.6)            
-##      Baylor Clinic Maseru                            15.7 (13.5)            
-##      Baylor Clinic Mohale's Hoek                      7.8 ( 6.7)            
-##      Baylor Clinic Mokhotlong                        10.3 ( 8.9)            
-##      Ifakara One-Stop Clinic                         14.5 (12.5)            
-##      Mbagala Rangi Tatu Hospital                      3.9 ( 3.4)            
-##      Seboche Mission Hospital                         6.7 ( 5.8)            
-##      Temeke Regional Referral Hospital                8.8 ( 7.5)            
-##      Upendano Dispensary                              5.3 ( 4.5)
+##   stsite (%)                                                           0.042
+##      Baylor Clinic Butha-Buthe                       24.5 (21.3)            
+##      Baylor Clinic Hlotse                            17.8 (15.5)            
+##      Baylor Clinic Maseru                            14.5 (12.7)            
+##      Baylor Clinic Mohale's Hoek                      6.1 ( 5.3)            
+##      Baylor Clinic Mokhotlong                        13.5 (11.7)            
+##      Ifakara One-Stop Clinic                         14.6 (12.7)            
+##      Mbagala Rangi Tatu Hospital                      5.3 ( 4.6)            
+##      Seboche Mission Hospital                         8.0 ( 6.9)            
+##      Temeke Regional Referral Hospital                4.9 ( 4.2)            
+##      Upendano Dispensary                              5.8 ( 5.0)
 ```
 
 ## As a "sensitivity" analysis (and for fun): add an instrumental variable analysis (even though assumptions probably do not hold)
@@ -2607,7 +2198,7 @@ summ(PP_iv, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
 </table>
 
 ```r
-# as expected, results seems biased
+# as expected, massive uncertainty, and unsure if assumptions valid
 ```
 
 # Results Comparison
@@ -2845,19 +2436,19 @@ summ(PP_ipw_sw, exp = T, confint = T, model.info = F, model.fit = F, robust = "H
 <tbody>
   <tr>
    <td style="text-align:left;font-weight: bold;"> (Intercept) </td>
-   <td style="text-align:right;"> 0.95 </td>
-   <td style="text-align:right;"> 0.65 </td>
-   <td style="text-align:right;"> 1.38 </td>
-   <td style="text-align:right;"> -0.28 </td>
-   <td style="text-align:right;"> 0.78 </td>
+   <td style="text-align:right;"> 0.99 </td>
+   <td style="text-align:right;"> 0.67 </td>
+   <td style="text-align:right;"> 1.46 </td>
+   <td style="text-align:right;"> -0.05 </td>
+   <td style="text-align:right;"> 0.96 </td>
   </tr>
   <tr>
    <td style="text-align:left;font-weight: bold;"> arm </td>
-   <td style="text-align:right;"> 0.71 </td>
-   <td style="text-align:right;"> 0.41 </td>
-   <td style="text-align:right;"> 1.21 </td>
-   <td style="text-align:right;"> -1.26 </td>
-   <td style="text-align:right;"> 0.21 </td>
+   <td style="text-align:right;"> 0.68 </td>
+   <td style="text-align:right;"> 0.39 </td>
+   <td style="text-align:right;"> 1.20 </td>
+   <td style="text-align:right;"> -1.33 </td>
+   <td style="text-align:right;"> 0.18 </td>
   </tr>
 </tbody>
 <tfoot><tr><td style="padding: 0; " colspan="100%">
@@ -2882,19 +2473,19 @@ summ(PP_ipw_usw, exp = T, confint = T, model.info = F, model.fit = F, robust = "
 <tbody>
   <tr>
    <td style="text-align:left;font-weight: bold;"> (Intercept) </td>
-   <td style="text-align:right;"> 0.95 </td>
-   <td style="text-align:right;"> 0.65 </td>
-   <td style="text-align:right;"> 1.38 </td>
-   <td style="text-align:right;"> -0.28 </td>
-   <td style="text-align:right;"> 0.78 </td>
+   <td style="text-align:right;"> 0.99 </td>
+   <td style="text-align:right;"> 0.67 </td>
+   <td style="text-align:right;"> 1.46 </td>
+   <td style="text-align:right;"> -0.05 </td>
+   <td style="text-align:right;"> 0.96 </td>
   </tr>
   <tr>
    <td style="text-align:left;font-weight: bold;"> arm </td>
-   <td style="text-align:right;"> 0.71 </td>
-   <td style="text-align:right;"> 0.41 </td>
-   <td style="text-align:right;"> 1.21 </td>
-   <td style="text-align:right;"> -1.26 </td>
-   <td style="text-align:right;"> 0.21 </td>
+   <td style="text-align:right;"> 0.68 </td>
+   <td style="text-align:right;"> 0.39 </td>
+   <td style="text-align:right;"> 1.20 </td>
+   <td style="text-align:right;"> -1.33 </td>
+   <td style="text-align:right;"> 0.18 </td>
   </tr>
 </tbody>
 <tfoot><tr><td style="padding: 0; " colspan="100%">
@@ -3026,19 +2617,19 @@ summ(PP_ipw_sw2, exp = T, confint = T, model.info = F, model.fit = F, robust = "
 <tbody>
   <tr>
    <td style="text-align:left;font-weight: bold;"> (Intercept) </td>
-   <td style="text-align:right;"> 1.02 </td>
-   <td style="text-align:right;"> 0.71 </td>
-   <td style="text-align:right;"> 1.46 </td>
-   <td style="text-align:right;"> 0.08 </td>
-   <td style="text-align:right;"> 0.93 </td>
+   <td style="text-align:right;"> 1.07 </td>
+   <td style="text-align:right;"> 0.73 </td>
+   <td style="text-align:right;"> 1.55 </td>
+   <td style="text-align:right;"> 0.33 </td>
+   <td style="text-align:right;"> 0.74 </td>
   </tr>
   <tr>
    <td style="text-align:left;font-weight: bold;"> arm </td>
-   <td style="text-align:right;"> 0.73 </td>
-   <td style="text-align:right;"> 0.43 </td>
-   <td style="text-align:right;"> 1.23 </td>
-   <td style="text-align:right;"> -1.19 </td>
-   <td style="text-align:right;"> 0.23 </td>
+   <td style="text-align:right;"> 0.69 </td>
+   <td style="text-align:right;"> 0.40 </td>
+   <td style="text-align:right;"> 1.19 </td>
+   <td style="text-align:right;"> -1.34 </td>
+   <td style="text-align:right;"> 0.18 </td>
   </tr>
 </tbody>
 <tfoot><tr><td style="padding: 0; " colspan="100%">
@@ -3063,181 +2654,23 @@ summ(PP_ipw_usw2, exp = T, confint = T, model.info = F, model.fit = F, robust = 
 <tbody>
   <tr>
    <td style="text-align:left;font-weight: bold;"> (Intercept) </td>
-   <td style="text-align:right;"> 1.02 </td>
-   <td style="text-align:right;"> 0.71 </td>
-   <td style="text-align:right;"> 1.46 </td>
-   <td style="text-align:right;"> 0.08 </td>
-   <td style="text-align:right;"> 0.93 </td>
+   <td style="text-align:right;"> 1.07 </td>
+   <td style="text-align:right;"> 0.73 </td>
+   <td style="text-align:right;"> 1.55 </td>
+   <td style="text-align:right;"> 0.33 </td>
+   <td style="text-align:right;"> 0.74 </td>
   </tr>
   <tr>
    <td style="text-align:left;font-weight: bold;"> arm </td>
-   <td style="text-align:right;"> 0.73 </td>
-   <td style="text-align:right;"> 0.43 </td>
-   <td style="text-align:right;"> 1.23 </td>
-   <td style="text-align:right;"> -1.19 </td>
-   <td style="text-align:right;"> 0.23 </td>
+   <td style="text-align:right;"> 0.69 </td>
+   <td style="text-align:right;"> 0.40 </td>
+   <td style="text-align:right;"> 1.19 </td>
+   <td style="text-align:right;"> -1.34 </td>
+   <td style="text-align:right;"> 0.18 </td>
   </tr>
 </tbody>
 <tfoot><tr><td style="padding: 0; " colspan="100%">
 <sup></sup> Standard errors: Robust, type = HC0</td></tr></tfoot>
-</table>
-
-```r
-summ(PP_adj_all, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
-```
-
-  <table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;border-bottom: 0;">
- <thead>
-  <tr>
-   <th style="text-align:left;">   </th>
-   <th style="text-align:right;"> exp(Est.) </th>
-   <th style="text-align:right;"> 2.5% </th>
-   <th style="text-align:right;"> 97.5% </th>
-   <th style="text-align:right;"> z val. </th>
-   <th style="text-align:right;"> p </th>
-  </tr>
- </thead>
-<tbody>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> (Intercept) </td>
-   <td style="text-align:right;"> 1.104 </td>
-   <td style="text-align:right;"> 0.341 </td>
-   <td style="text-align:right;"> 3.582 </td>
-   <td style="text-align:right;"> 0.166 </td>
-   <td style="text-align:right;"> 0.868 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> arm </td>
-   <td style="text-align:right;"> 0.746 </td>
-   <td style="text-align:right;"> 0.432 </td>
-   <td style="text-align:right;"> 1.290 </td>
-   <td style="text-align:right;"> -1.048 </td>
-   <td style="text-align:right;"> 0.295 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> agegr_der&gt;= 12 and 
-   </td>
-<td style="text-align:right;"> 1.993 </td>
-   <td style="text-align:right;"> 0.784 </td>
-   <td style="text-align:right;"> 5.066 </td>
-   <td style="text-align:right;"> 1.448 </td>
-   <td style="text-align:right;"> 0.147 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> stsite_der2Tanzania </td>
-   <td style="text-align:right;"> 1.425 </td>
-   <td style="text-align:right;"> 0.674 </td>
-   <td style="text-align:right;"> 3.015 </td>
-   <td style="text-align:right;"> 0.927 </td>
-   <td style="text-align:right;"> 0.354 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> regimen_der2NNRTI-based </td>
-   <td style="text-align:right;"> 0.716 </td>
-   <td style="text-align:right;"> 0.173 </td>
-   <td style="text-align:right;"> 2.959 </td>
-   <td style="text-align:right;"> -0.462 </td>
-   <td style="text-align:right;"> 0.644 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> regimen_der2PI-based </td>
-   <td style="text-align:right;"> 1.945 </td>
-   <td style="text-align:right;"> 0.851 </td>
-   <td style="text-align:right;"> 4.444 </td>
-   <td style="text-align:right;"> 1.577 </td>
-   <td style="text-align:right;"> 0.115 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> sexMale </td>
-   <td style="text-align:right;"> 1.439 </td>
-   <td style="text-align:right;"> 0.836 </td>
-   <td style="text-align:right;"> 2.474 </td>
-   <td style="text-align:right;"> 1.314 </td>
-   <td style="text-align:right;"> 0.189 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> scrvl </td>
-   <td style="text-align:right;"> 1.000 </td>
-   <td style="text-align:right;"> 1.000 </td>
-   <td style="text-align:right;"> 1.000 </td>
-   <td style="text-align:right;"> -0.932 </td>
-   <td style="text-align:right;"> 0.351 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> wt </td>
-   <td style="text-align:right;"> 0.982 </td>
-   <td style="text-align:right;"> 0.954 </td>
-   <td style="text-align:right;"> 1.011 </td>
-   <td style="text-align:right;"> -1.219 </td>
-   <td style="text-align:right;"> 0.223 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> time_on_art_yrs </td>
-   <td style="text-align:right;"> 0.981 </td>
-   <td style="text-align:right;"> 0.901 </td>
-   <td style="text-align:right;"> 1.069 </td>
-   <td style="text-align:right;"> -0.436 </td>
-   <td style="text-align:right;"> 0.663 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> time_on_curr_art_yrs </td>
-   <td style="text-align:right;"> 1.026 </td>
-   <td style="text-align:right;"> 0.887 </td>
-   <td style="text-align:right;"> 1.186 </td>
-   <td style="text-align:right;"> 0.343 </td>
-   <td style="text-align:right;"> 0.732 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> fathervitDead </td>
-   <td style="text-align:right;"> 1.027 </td>
-   <td style="text-align:right;"> 0.557 </td>
-   <td style="text-align:right;"> 1.895 </td>
-   <td style="text-align:right;"> 0.085 </td>
-   <td style="text-align:right;"> 0.932 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> fathervitUnknown </td>
-   <td style="text-align:right;"> 0.548 </td>
-   <td style="text-align:right;"> 0.195 </td>
-   <td style="text-align:right;"> 1.542 </td>
-   <td style="text-align:right;"> -1.140 </td>
-   <td style="text-align:right;"> 0.254 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> mothervitDead </td>
-   <td style="text-align:right;"> 0.764 </td>
-   <td style="text-align:right;"> 0.402 </td>
-   <td style="text-align:right;"> 1.450 </td>
-   <td style="text-align:right;"> -0.823 </td>
-   <td style="text-align:right;"> 0.410 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> mothervitUnknown </td>
-   <td style="text-align:right;"> 0.000 </td>
-   <td style="text-align:right;"> 0.000 </td>
-   <td style="text-align:right;"> Inf </td>
-   <td style="text-align:right;"> -0.016 </td>
-   <td style="text-align:right;"> 0.987 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> travtim </td>
-   <td style="text-align:right;"> 0.999 </td>
-   <td style="text-align:right;"> 0.993 </td>
-   <td style="text-align:right;"> 1.004 </td>
-   <td style="text-align:right;"> -0.492 </td>
-   <td style="text-align:right;"> 0.623 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;font-weight: bold;"> travcost </td>
-   <td style="text-align:right;"> 1.000 </td>
-   <td style="text-align:right;"> 1.000 </td>
-   <td style="text-align:right;"> 1.000 </td>
-   <td style="text-align:right;"> -1.073 </td>
-   <td style="text-align:right;"> 0.283 </td>
-  </tr>
-</tbody>
-<tfoot><tr><td style="padding: 0; " colspan="100%">
-<sup></sup> Standard errors: MLE</td></tr></tfoot>
 </table>
 
 ```r

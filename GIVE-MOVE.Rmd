@@ -538,7 +538,6 @@ summ(PP_adj2, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
 summ(PP_unadj2, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
 summ(PP_ipw_sw2, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
 summ(PP_ipw_usw2, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
-summ(PP_adj_all, exp = T, confint = T, model.info = F, model.fit = F, digits = 3)
 
 plot_summs(ITT, ITT_unadj, PP_adj, PP_unadj, PP_ipw_sw, PP_ipw_usw,
            scale = F,
