@@ -8,10 +8,11 @@ output:
     toc: yes
     toc_float: yes
     code_folding: hide
-  pdf_document:
-    toc: yes
   word_document:
     toc: yes
+  pdf_document:
+    toc: yes
+    toc_depth: 5
 ---
 
 ## Estimation of a* per-protocol effect for GIVE-MOVE
@@ -90,7 +91,7 @@ analysis <- analysis %>%
 # table(analysis$ppadh, useNA = "always")
 tbl1 <- table(analysis$arm, analysis$ppadh)
 # adherence rate, by arm
-tbl2 <- round(100*prop.table(table(analysis$arm, analysis$ppadh),1),0) # 88% adherence in cont / 79% adherence in int
+tbl2 <- round(100*prop.table(table(analysis$arm, analysis$ppadh),1),0)
 # Define new row and column names
 new_row_names1 <- c("Control", "Intervention")
 new_col_names1 <- c("Non-adherent", "Adherent")
@@ -114,7 +115,7 @@ analysis <- analysis %>%
 # table(analysis$ppadh2, useNA = "always")
 tbl1 <- table(analysis$arm, analysis$ppadh2)
 # adherence rate, by arm
-tbl2 <- round(100*prop.table(table(analysis$arm, analysis$ppadh2),1),0) #90% adherence in cont / 81% adherence in int
+tbl2 <- round(100*prop.table(table(analysis$arm, analysis$ppadh2),1),0)
 # Define new row and column names
 new_row_names1 <- c("Control", "Intervention")
 new_col_names1 <- c("Non-adherent", "Adherent")
@@ -167,19 +168,20 @@ ITT_unadj <- analysis %>%
       # + regimen_der2,
               family = "binomial", data=.)
 ```
-
+\clearpage
 ##### ITT analysis, adjusted for stratification variables (primary analysis model)
 ```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 summ(ITT, exp = T, confint = T, model.info = F, model.fit = F, digits = 2)
 ```
-
+\clearpage
 ##### ITT analysis, unadjusted
 ```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 summ(ITT_unadj, exp = T, confint = T, model.info = F, model.fit = F, digits = 2)
 ```
+\clearpage
 
 ### Baseline characteristics, by adherence and by arm
-```{r}
+```{r message=FALSE, warning=FALSE}
 # Only relevant site variable in current dataset: table(analysis$stsite)
 # Currently omitted: "Immunosuppression" (derived), "Full orphan" (derived), "ART regimen"
 
@@ -188,7 +190,7 @@ vars.list <- c("arm","ppadh","agegr_der","stsite_der2","regimen_der2","sex","scr
 df_pp <- analysis[,colnames(analysis)%in%vars.list]
 df_pp <- df_pp[,match(vars.list,colnames(df_pp))]
 
-colnames(df_pp) <- vars.list <- c("ARM","Adherent to treatment strategy","Age","Country","ART core agent","Sex","Viral load prior to enrolment","Clinical WHO stage", "CD4 cell count", "Hepatitis B surface antigen", "Weight", "Time since initiation of first documented ART regimen (years)", "Time since initiation of current ART regimen (years)", "Satisfaction with current regimen (self-reported)", "Missed ≥1 dose of ART over the past 4 weeks (self-reported)", "No drug intake for 2 days or more (self-reported)", "Primary caregiver", "Vital state of mother", "Vital state of father", "Travel time to healthcare facility (one way; minutes)", "Cost of travel to healthcare facility (one way; USD)", "Main mode of travel to healthcare facility", "Site")
+colnames(df_pp) <- vars.list <- c("ARM","Adherent to treatment strategy","Age","Country","ART core agent","Sex","Viral load prior to enrolment","Clinical WHO stage", "CD4 cell count", "Hepatitis B surface antigen", "Weight", "Time since initiation of first documented ART regimen (years)", "Time since initiation of current ART regimen (years)", "Satisfaction with current regimen (self-reported)", "Missed 1 or more dose of ART over the past 4 weeks (self-reported)", "No drug intake for 2 days or more (self-reported)", "Primary caregiver", "Vital state of mother", "Vital state of father", "Travel time to healthcare facility (one way; minutes)", "Cost of travel to healthcare facility (one way; USD)", "Main mode of travel to healthcare facility", "Site")
 
 char_vars <- c("Clinical WHO stage","Main mode of travel to healthcare facility", "Site")
 # Convert character variables to factors
@@ -215,7 +217,8 @@ df_pp$`Adherent to treatment strategy` <- ifelse(df_pp$`Adherent to treatment st
 table_pp_adh <- CreateTableOne(data = df_pp, vars = vars.list[!vars.list %in% c("Adherent to treatment strategy", "ARM")], strata = "Adherent to treatment strategy", includeNA = TRUE, test = TRUE, addOverall = TRUE)
 capture.output(table_pp_adh <- print(table_pp_adh, nonnormal = vars.list,catDigits = 1,SMD = TRUE,showAllLevels = TRUE,test = TRUE,printToggle = FALSE,missing = TRUE))
 #print
-knitr::kable(table_pp_adh, caption = "Baseline characteristics, by adherence status")
+kable(table_pp_adh, format = "markdown", table.attr = 'class="table"', caption = "Baseline characteristics, by adherence status") %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE)
 
 # # intervention arm only
 df_pp_int <- df_pp %>%
@@ -467,7 +470,6 @@ round(summary(df_ipw2$sw), 3)
 ```
 ####### We can see that the mean of stabilized weights (for both adherence definitions) is 1, while it is 1.9 for unstabilized weights. According to guidance, mean of stabilized weights should be around 1. For both unstabilized and stabilized weights, it seems there are no extreme weights. So, no truncation needed.
 
-
 ##### Check the distribution of the covariates by the treatment status on the pseudo population
 ```{r}
 ## check the distribution of the covariates by the treatment status on the pseudo population. The standardized mean difference (SMD) less than 0.10 is often recommended as a good covariate balancing (add ref, e.g. Zhongheng Zhang, Hwa Jung Kim, Guillaume Lonjon, Yibing Zhu, et al. Balance diagnostics after propensity score matching. Annals of translational medicine, 7(1), 2019.). To do this, now we will create a survey design using the weights:
@@ -581,42 +583,42 @@ PP_iv2 <- analysis %>%
 # summ(PP_iv2, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
 
 ```
-
+\clearpage
 ##### Instrumental variable analysis, Adherence definition 1
 ```{r}
 summ(PP_iv, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
 ```
 ###### As expected, massive uncertainty - and unsure if assumptions even valid
-
+\clearpage
 ##### Instrumental variable analysis, Adherence definition 2
 ```{r}
 summ(PP_iv2, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
 ```
 ###### As expected, massive uncertainty - and unsure if assumptions even valid
 
-
+\clearpage
 ### Results, Adherence definition 1
 
 ##### Naive PP analysis, unadjusted
 ```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 summ(PP_unadj, exp = T, confint = T, model.info = F, model.fit = F, digits = 2)
 ```
-
+\clearpage
 ##### Naive PP analysis, adjusted
 ```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 summ(PP_adj, exp = T, confint = T, model.info = F, model.fit = F, digits = 2)
 ```
-
+\clearpage
 ##### Inverse probability weighting, stabilized weights
 ```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 summ(PP_ipw_sw, exp = T, confint = T, model.info = F, model.fit = F, digits = 2)
 ```
-
+\clearpage
 ##### Inverse probability weighting, unstabilized weights
 ```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 summ(PP_ipw_usw, exp = T, confint = T, model.info = F, model.fit = F, digits = 2)
 ```
-
+\clearpage
 
 ### Results, Adherence definition 2
 
@@ -624,22 +626,22 @@ summ(PP_ipw_usw, exp = T, confint = T, model.info = F, model.fit = F, digits = 2
 ```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 summ(PP_unadj2, exp = T, confint = T, model.info = F, model.fit = F, digits = 2)
 ```
-
+\clearpage
 ##### Naive PP analysis, adjusted
 ```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 summ(PP_adj2, exp = T, confint = T, model.info = F, model.fit = F, digits = 2)
 ```
-
+\clearpage
 ##### Inverse probability weighting, stabilized weights
 ```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 summ(PP_ipw_sw2, exp = T, confint = T, model.info = F, model.fit = F, digits = 2)
 ```
-
+\clearpage
 ##### Inverse probability weighting, unstabilized weights
 ```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 summ(PP_ipw_usw2, exp = T, confint = T, model.info = F, model.fit = F, digits = 2)
 ```
-
+\clearpage
 ### Plot ORs, Adherence definition 1
 ```{r echo=TRUE, warning=FALSE}
 plot_summs(ITT, ITT_unadj, PP_adj, PP_unadj, PP_ipw_sw, PP_ipw_usw,
@@ -650,7 +652,7 @@ plot_summs(ITT, ITT_unadj, PP_adj, PP_unadj, PP_ipw_sw, PP_ipw_usw,
            legend.title = "Method / Adherence Definition 1",
            model.names = c("adjusted ITT", "unadjusted ITT", "adjusted PP", "unadjusted PP","IPW-PP stabilized","IPW-PP unstabilized"))
 ```
-
+\clearpage
 
 ### Plot ORs, Adherence definition 2
 ```{r echo=TRUE, warning=FALSE}

@@ -8,10 +8,11 @@ output:
     toc: yes
     toc_float: yes
     code_folding: hide
-  pdf_document:
-    toc: yes
   word_document:
     toc: yes
+  pdf_document:
+    toc: yes
+    toc_depth: 5
 ---
 
 ## Estimation of a* per-protocol effect for GIVE-MOVE
@@ -93,7 +94,7 @@ analysis <- analysis %>%
 # table(analysis$ppadh, useNA = "always")
 tbl1 <- table(analysis$arm, analysis$ppadh)
 # adherence rate, by arm
-tbl2 <- round(100*prop.table(table(analysis$arm, analysis$ppadh),1),0) # 88% adherence in cont / 79% adherence in int
+tbl2 <- round(100*prop.table(table(analysis$arm, analysis$ppadh),1),0)
 # Define new row and column names
 new_row_names1 <- c("Control", "Intervention")
 new_col_names1 <- c("Non-adherent", "Adherent")
@@ -117,7 +118,7 @@ analysis <- analysis %>%
 # table(analysis$ppadh2, useNA = "always")
 tbl1 <- table(analysis$arm, analysis$ppadh2)
 # adherence rate, by arm
-tbl2 <- round(100*prop.table(table(analysis$arm, analysis$ppadh2),1),0) #90% adherence in cont / 81% adherence in int
+tbl2 <- round(100*prop.table(table(analysis$arm, analysis$ppadh2),1),0)
 # Define new row and column names
 new_row_names1 <- c("Control", "Intervention")
 new_col_names1 <- c("Non-adherent", "Adherent")
@@ -183,7 +184,7 @@ ITT_unadj <- analysis %>%
       # + regimen_der2,
               family = "binomial", data=.)
 ```
-
+\clearpage
 ##### ITT analysis, adjusted for stratification variables (primary analysis model)
   <table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;border-bottom: 0;">
  <thead>
@@ -250,7 +251,7 @@ ITT_unadj <- analysis %>%
 <tfoot><tr><td style="padding: 0; " colspan="100%">
 <sup></sup> Standard errors: MLE</td></tr></tfoot>
 </table>
-
+\clearpage
 ##### ITT analysis, unadjusted
   <table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;border-bottom: 0;">
  <thead>
@@ -284,6 +285,7 @@ ITT_unadj <- analysis %>%
 <tfoot><tr><td style="padding: 0; " colspan="100%">
 <sup></sup> Standard errors: MLE</td></tr></tfoot>
 </table>
+\clearpage
 
 ### Baseline characteristics, by adherence and by arm
 
@@ -296,7 +298,7 @@ vars.list <- c("arm","ppadh","agegr_der","stsite_der2","regimen_der2","sex","scr
 df_pp <- analysis[,colnames(analysis)%in%vars.list]
 df_pp <- df_pp[,match(vars.list,colnames(df_pp))]
 
-colnames(df_pp) <- vars.list <- c("ARM","Adherent to treatment strategy","Age","Country","ART core agent","Sex","Viral load prior to enrolment","Clinical WHO stage", "CD4 cell count", "Hepatitis B surface antigen", "Weight", "Time since initiation of first documented ART regimen (years)", "Time since initiation of current ART regimen (years)", "Satisfaction with current regimen (self-reported)", "Missed ≥1 dose of ART over the past 4 weeks (self-reported)", "No drug intake for 2 days or more (self-reported)", "Primary caregiver", "Vital state of mother", "Vital state of father", "Travel time to healthcare facility (one way; minutes)", "Cost of travel to healthcare facility (one way; USD)", "Main mode of travel to healthcare facility", "Site")
+colnames(df_pp) <- vars.list <- c("ARM","Adherent to treatment strategy","Age","Country","ART core agent","Sex","Viral load prior to enrolment","Clinical WHO stage", "CD4 cell count", "Hepatitis B surface antigen", "Weight", "Time since initiation of first documented ART regimen (years)", "Time since initiation of current ART regimen (years)", "Satisfaction with current regimen (self-reported)", "Missed 1 or more dose of ART over the past 4 weeks (self-reported)", "No drug intake for 2 days or more (self-reported)", "Primary caregiver", "Vital state of mother", "Vital state of father", "Travel time to healthcare facility (one way; minutes)", "Cost of travel to healthcare facility (one way; USD)", "Main mode of travel to healthcare facility", "Site")
 
 char_vars <- c("Clinical WHO stage","Main mode of travel to healthcare facility", "Site")
 # Convert character variables to factors
@@ -330,676 +332,81 @@ capture.output(table_pp_adh <- print(table_pp_adh, nonnormal = vars.list,catDigi
 
 ```r
 #print
-knitr::kable(table_pp_adh, caption = "Baseline characteristics, by adherence status")
+kable(table_pp_adh, format = "markdown", table.attr = 'class="table"', caption = "Baseline characteristics, by adherence status") %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE)
 ```
 
-<table>
-<caption>Baseline characteristics, by adherence status</caption>
- <thead>
-  <tr>
-   <th style="text-align:left;">   </th>
-   <th style="text-align:left;"> level </th>
-   <th style="text-align:left;"> Overall </th>
-   <th style="text-align:left;"> Adherent </th>
-   <th style="text-align:left;"> Non-Adherent </th>
-   <th style="text-align:left;"> p </th>
-   <th style="text-align:left;"> test </th>
-   <th style="text-align:left;"> Missing </th>
-  </tr>
- </thead>
-<tbody>
-  <tr>
-   <td style="text-align:left;"> n </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> 284 </td>
-   <td style="text-align:left;"> 236 </td>
-   <td style="text-align:left;"> 48 </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Age (%) </td>
-   <td style="text-align:left;"> &gt;= 0.5 and &lt; 12 </td>
-   <td style="text-align:left;"> 116 (40.8) </td>
-   <td style="text-align:left;"> 95 (40.3) </td>
-   <td style="text-align:left;"> 21 (43.8) </td>
-   <td style="text-align:left;"> 0.773 </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> 0.0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> &gt;= 12 and &lt; 19 </td>
-   <td style="text-align:left;"> 168 (59.2) </td>
-   <td style="text-align:left;"> 141 (59.7) </td>
-   <td style="text-align:left;"> 27 (56.2) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Country (%) </td>
-   <td style="text-align:left;"> Lesotho </td>
-   <td style="text-align:left;"> 203 (71.5) </td>
-   <td style="text-align:left;"> 168 (71.2) </td>
-   <td style="text-align:left;"> 35 (72.9) </td>
-   <td style="text-align:left;"> 0.947 </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> 0.0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Tanzania </td>
-   <td style="text-align:left;"> 81 (28.5) </td>
-   <td style="text-align:left;"> 68 (28.8) </td>
-   <td style="text-align:left;"> 13 (27.1) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> ART core agent (%) </td>
-   <td style="text-align:left;"> INSTI-based </td>
-   <td style="text-align:left;"> 170 (59.9) </td>
-   <td style="text-align:left;"> 140 (59.3) </td>
-   <td style="text-align:left;"> 30 (62.5) </td>
-   <td style="text-align:left;"> 0.697 </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> 0.0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> NNRTI-based </td>
-   <td style="text-align:left;"> 13 ( 4.6) </td>
-   <td style="text-align:left;"> 10 ( 4.2) </td>
-   <td style="text-align:left;"> 3 ( 6.2) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> PI-based </td>
-   <td style="text-align:left;"> 101 (35.6) </td>
-   <td style="text-align:left;"> 86 (36.4) </td>
-   <td style="text-align:left;"> 15 (31.2) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Sex (%) </td>
-   <td style="text-align:left;"> Female </td>
-   <td style="text-align:left;"> 158 (55.6) </td>
-   <td style="text-align:left;"> 132 (55.9) </td>
-   <td style="text-align:left;"> 26 (54.2) </td>
-   <td style="text-align:left;"> 0.948 </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> 0.0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Male </td>
-   <td style="text-align:left;"> 126 (44.4) </td>
-   <td style="text-align:left;"> 104 (44.1) </td>
-   <td style="text-align:left;"> 22 (45.8) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Viral load prior to enrolment (median [IQR]) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> 6600.00 [1465.25, 36225.00] </td>
-   <td style="text-align:left;"> 6685.00 [1372.50, 36225.00] </td>
-   <td style="text-align:left;"> 6160.00 [2910.00, 35845.50] </td>
-   <td style="text-align:left;"> 0.428 </td>
-   <td style="text-align:left;"> nonnorm </td>
-   <td style="text-align:left;"> 0.0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Clinical WHO stage (%) </td>
-   <td style="text-align:left;"> T1 </td>
-   <td style="text-align:left;"> 274 (96.5) </td>
-   <td style="text-align:left;"> 228 (96.6) </td>
-   <td style="text-align:left;"> 46 (95.8) </td>
-   <td style="text-align:left;"> 0.531 </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> 0.0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> T2 </td>
-   <td style="text-align:left;"> 5 ( 1.8) </td>
-   <td style="text-align:left;"> 4 ( 1.7) </td>
-   <td style="text-align:left;"> 1 ( 2.1) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> T3 </td>
-   <td style="text-align:left;"> 3 ( 1.1) </td>
-   <td style="text-align:left;"> 3 ( 1.3) </td>
-   <td style="text-align:left;"> 0 ( 0.0) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> T4 </td>
-   <td style="text-align:left;"> 2 ( 0.7) </td>
-   <td style="text-align:left;"> 1 ( 0.4) </td>
-   <td style="text-align:left;"> 1 ( 2.1) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> CD4 cell count (median [IQR]) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> 605.00 [425.00, 835.50] </td>
-   <td style="text-align:left;"> 605.00 [425.00, 834.50] </td>
-   <td style="text-align:left;"> 625.50 [436.25, 854.00] </td>
-   <td style="text-align:left;"> 0.879 </td>
-   <td style="text-align:left;"> nonnorm </td>
-   <td style="text-align:left;"> 15.8 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Hepatitis B surface antigen (%) </td>
-   <td style="text-align:left;"> Negative </td>
-   <td style="text-align:left;"> 218 (76.8) </td>
-   <td style="text-align:left;"> 183 (77.5) </td>
-   <td style="text-align:left;"> 35 (72.9) </td>
-   <td style="text-align:left;"> 0.754 </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> 21.8 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Positive </td>
-   <td style="text-align:left;"> 4 ( 1.4) </td>
-   <td style="text-align:left;"> 3 ( 1.3) </td>
-   <td style="text-align:left;"> 1 ( 2.1) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 62 (21.8) </td>
-   <td style="text-align:left;"> 50 (21.2) </td>
-   <td style="text-align:left;"> 12 (25.0) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Weight (median [IQR]) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> 34.10 [21.98, 44.60] </td>
-   <td style="text-align:left;"> 34.65 [22.23, 45.02] </td>
-   <td style="text-align:left;"> 29.85 [21.65, 41.42] </td>
-   <td style="text-align:left;"> 0.336 </td>
-   <td style="text-align:left;"> nonnorm </td>
-   <td style="text-align:left;"> 0.0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Time since initiation of first documented ART regimen (years) (median [IQR]) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> 6.00 [3.00, 10.00] </td>
-   <td style="text-align:left;"> 6.00 [3.00, 10.00] </td>
-   <td style="text-align:left;"> 7.00 [4.00, 11.00] </td>
-   <td style="text-align:left;"> 0.349 </td>
-   <td style="text-align:left;"> nonnorm </td>
-   <td style="text-align:left;"> 0.0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Time since initiation of current ART regimen (years) (median [IQR]) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> 2.00 [1.00, 3.00] </td>
-   <td style="text-align:left;"> 2.00 [1.00, 3.00] </td>
-   <td style="text-align:left;"> 1.50 [1.00, 2.25] </td>
-   <td style="text-align:left;"> 0.333 </td>
-   <td style="text-align:left;"> nonnorm </td>
-   <td style="text-align:left;"> 0.0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Satisfaction with current regimen (self-reported) (%) </td>
-   <td style="text-align:left;"> Neutral </td>
-   <td style="text-align:left;"> 11 ( 3.9) </td>
-   <td style="text-align:left;"> 8 ( 3.4) </td>
-   <td style="text-align:left;"> 3 ( 6.2) </td>
-   <td style="text-align:left;"> 0.425 </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> 1.4 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Somewhat dissatisfied </td>
-   <td style="text-align:left;"> 29 (10.2) </td>
-   <td style="text-align:left;"> 26 (11.0) </td>
-   <td style="text-align:left;"> 3 ( 6.2) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Somewhat satisfied </td>
-   <td style="text-align:left;"> 70 (24.6) </td>
-   <td style="text-align:left;"> 59 (25.0) </td>
-   <td style="text-align:left;"> 11 (22.9) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Very dissatisfied </td>
-   <td style="text-align:left;"> 17 ( 6.0) </td>
-   <td style="text-align:left;"> 14 ( 5.9) </td>
-   <td style="text-align:left;"> 3 ( 6.2) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Very satisfied </td>
-   <td style="text-align:left;"> 153 (53.9) </td>
-   <td style="text-align:left;"> 127 (53.8) </td>
-   <td style="text-align:left;"> 26 (54.2) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 4 ( 1.4) </td>
-   <td style="text-align:left;"> 2 ( 0.8) </td>
-   <td style="text-align:left;"> 2 ( 4.2) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Missed ≥1 dose of ART over the past 4 weeks (self-reported) (%) </td>
-   <td style="text-align:left;"> No </td>
-   <td style="text-align:left;"> 152 (53.5) </td>
-   <td style="text-align:left;"> 128 (54.2) </td>
-   <td style="text-align:left;"> 24 (50.0) </td>
-   <td style="text-align:left;"> 0.287 </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> 1.4 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Unknown </td>
-   <td style="text-align:left;"> 33 (11.6) </td>
-   <td style="text-align:left;"> 26 (11.0) </td>
-   <td style="text-align:left;"> 7 (14.6) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Yes </td>
-   <td style="text-align:left;"> 95 (33.5) </td>
-   <td style="text-align:left;"> 80 (33.9) </td>
-   <td style="text-align:left;"> 15 (31.2) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 4 ( 1.4) </td>
-   <td style="text-align:left;"> 2 ( 0.8) </td>
-   <td style="text-align:left;"> 2 ( 4.2) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> No drug intake for 2 days or more (self-reported) (%) </td>
-   <td style="text-align:left;"> No </td>
-   <td style="text-align:left;"> 19 ( 6.7) </td>
-   <td style="text-align:left;"> 17 ( 7.2) </td>
-   <td style="text-align:left;"> 2 ( 4.2) </td>
-   <td style="text-align:left;"> 0.758 </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> 66.5 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Unknown </td>
-   <td style="text-align:left;"> 3 ( 1.1) </td>
-   <td style="text-align:left;"> 2 ( 0.8) </td>
-   <td style="text-align:left;"> 1 ( 2.1) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Yes </td>
-   <td style="text-align:left;"> 73 (25.7) </td>
-   <td style="text-align:left;"> 61 (25.8) </td>
-   <td style="text-align:left;"> 12 (25.0) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 189 (66.5) </td>
-   <td style="text-align:left;"> 156 (66.1) </td>
-   <td style="text-align:left;"> 33 (68.8) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Primary caregiver (%) </td>
-   <td style="text-align:left;"> Both parents </td>
-   <td style="text-align:left;"> 35 (12.3) </td>
-   <td style="text-align:left;"> 26 (11.0) </td>
-   <td style="text-align:left;"> 9 (18.8) </td>
-   <td style="text-align:left;"> 0.387 </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> 2.1 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Father </td>
-   <td style="text-align:left;"> 28 ( 9.9) </td>
-   <td style="text-align:left;"> 22 ( 9.3) </td>
-   <td style="text-align:left;"> 6 (12.5) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Grandparent(s) </td>
-   <td style="text-align:left;"> 58 (20.4) </td>
-   <td style="text-align:left;"> 53 (22.5) </td>
-   <td style="text-align:left;"> 5 (10.4) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Mother </td>
-   <td style="text-align:left;"> 102 (35.9) </td>
-   <td style="text-align:left;"> 85 (36.0) </td>
-   <td style="text-align:left;"> 17 (35.4) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Other </td>
-   <td style="text-align:left;"> 55 (19.4) </td>
-   <td style="text-align:left;"> 45 (19.1) </td>
-   <td style="text-align:left;"> 10 (20.8) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 6 ( 2.1) </td>
-   <td style="text-align:left;"> 5 ( 2.1) </td>
-   <td style="text-align:left;"> 1 ( 2.1) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Vital state of mother (%) </td>
-   <td style="text-align:left;"> Alive </td>
-   <td style="text-align:left;"> 174 (61.3) </td>
-   <td style="text-align:left;"> 141 (59.7) </td>
-   <td style="text-align:left;"> 33 (68.8) </td>
-   <td style="text-align:left;"> 0.317 </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> 0.0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Dead </td>
-   <td style="text-align:left;"> 85 (29.9) </td>
-   <td style="text-align:left;"> 75 (31.8) </td>
-   <td style="text-align:left;"> 10 (20.8) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Unknown </td>
-   <td style="text-align:left;"> 25 ( 8.8) </td>
-   <td style="text-align:left;"> 20 ( 8.5) </td>
-   <td style="text-align:left;"> 5 (10.4) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Vital state of father (%) </td>
-   <td style="text-align:left;"> Alive </td>
-   <td style="text-align:left;"> 201 (70.8) </td>
-   <td style="text-align:left;"> 164 (69.5) </td>
-   <td style="text-align:left;"> 37 (77.1) </td>
-   <td style="text-align:left;"> 0.367 </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> 0.0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Dead </td>
-   <td style="text-align:left;"> 80 (28.2) </td>
-   <td style="text-align:left;"> 70 (29.7) </td>
-   <td style="text-align:left;"> 10 (20.8) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Unknown </td>
-   <td style="text-align:left;"> 3 ( 1.1) </td>
-   <td style="text-align:left;"> 2 ( 0.8) </td>
-   <td style="text-align:left;"> 1 ( 2.1) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Travel time to healthcare facility (one way; minutes) (median [IQR]) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> 60.00 [30.00, 120.00] </td>
-   <td style="text-align:left;"> 60.00 [30.00, 120.00] </td>
-   <td style="text-align:left;"> 55.00 [20.00, 97.50] </td>
-   <td style="text-align:left;"> 0.301 </td>
-   <td style="text-align:left;"> nonnorm </td>
-   <td style="text-align:left;"> 0.0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Cost of travel to healthcare facility (one way; USD) (median [IQR]) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> 36.00 [16.00, 1050.00] </td>
-   <td style="text-align:left;"> 36.00 [16.75, 1050.00] </td>
-   <td style="text-align:left;"> 54.00 [16.00, 1125.00] </td>
-   <td style="text-align:left;"> 0.996 </td>
-   <td style="text-align:left;"> nonnorm </td>
-   <td style="text-align:left;"> 0.0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Main mode of travel to healthcare facility (%) </td>
-   <td style="text-align:left;"> Bicycle </td>
-   <td style="text-align:left;"> 1 ( 0.4) </td>
-   <td style="text-align:left;"> 0 ( 0.0) </td>
-   <td style="text-align:left;"> 1 ( 2.1) </td>
-   <td style="text-align:left;"> 0.063 </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> 0.0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Private motorised vehicle (own or borrowed) </td>
-   <td style="text-align:left;"> 3 ( 1.1) </td>
-   <td style="text-align:left;"> 3 ( 1.3) </td>
-   <td style="text-align:left;"> 0 ( 0.0) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Ride (horse/donkey) </td>
-   <td style="text-align:left;"> 1 ( 0.4) </td>
-   <td style="text-align:left;"> 1 ( 0.4) </td>
-   <td style="text-align:left;"> 0 ( 0.0) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Taxi / public transport </td>
-   <td style="text-align:left;"> 275 (96.8) </td>
-   <td style="text-align:left;"> 230 (97.5) </td>
-   <td style="text-align:left;"> 45 (93.8) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Walk </td>
-   <td style="text-align:left;"> 4 ( 1.4) </td>
-   <td style="text-align:left;"> 2 ( 0.8) </td>
-   <td style="text-align:left;"> 2 ( 4.2) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site (%) </td>
-   <td style="text-align:left;"> Baylor Clinic Butha-Buthe </td>
-   <td style="text-align:left;"> 53 (18.7) </td>
-   <td style="text-align:left;"> 52 (22.0) </td>
-   <td style="text-align:left;"> 1 ( 2.1) </td>
-   <td style="text-align:left;"> 0.019 </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> 0.0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Baylor Clinic Hlotse </td>
-   <td style="text-align:left;"> 43 (15.1) </td>
-   <td style="text-align:left;"> 35 (14.8) </td>
-   <td style="text-align:left;"> 8 (16.7) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Baylor Clinic Maseru </td>
-   <td style="text-align:left;"> 34 (12.0) </td>
-   <td style="text-align:left;"> 27 (11.4) </td>
-   <td style="text-align:left;"> 7 (14.6) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Baylor Clinic Mohale's Hoek </td>
-   <td style="text-align:left;"> 19 ( 6.7) </td>
-   <td style="text-align:left;"> 12 ( 5.1) </td>
-   <td style="text-align:left;"> 7 (14.6) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Baylor Clinic Mokhotlong </td>
-   <td style="text-align:left;"> 36 (12.7) </td>
-   <td style="text-align:left;"> 26 (11.0) </td>
-   <td style="text-align:left;"> 10 (20.8) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Ifakara One-Stop Clinic </td>
-   <td style="text-align:left;"> 38 (13.4) </td>
-   <td style="text-align:left;"> 32 (13.6) </td>
-   <td style="text-align:left;"> 6 (12.5) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Mbagala Rangi Tatu Hospital </td>
-   <td style="text-align:left;"> 14 ( 4.9) </td>
-   <td style="text-align:left;"> 12 ( 5.1) </td>
-   <td style="text-align:left;"> 2 ( 4.2) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Seboche Mission Hospital </td>
-   <td style="text-align:left;"> 18 ( 6.3) </td>
-   <td style="text-align:left;"> 16 ( 6.8) </td>
-   <td style="text-align:left;"> 2 ( 4.2) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Temeke Regional Referral Hospital </td>
-   <td style="text-align:left;"> 15 ( 5.3) </td>
-   <td style="text-align:left;"> 11 ( 4.7) </td>
-   <td style="text-align:left;"> 4 ( 8.3) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> Upendano Dispensary </td>
-   <td style="text-align:left;"> 14 ( 4.9) </td>
-   <td style="text-align:left;"> 13 ( 5.5) </td>
-   <td style="text-align:left;"> 1 ( 2.1) </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:left;">  </td>
-  </tr>
-</tbody>
-</table>
+
+
+Table: Baseline characteristics, by adherence status
+
+|                                                                             |level                                       |Overall                     |Adherent                    |Non-Adherent                |p     |test    |Missing |
+|:----------------------------------------------------------------------------|:-------------------------------------------|:---------------------------|:---------------------------|:---------------------------|:-----|:-------|:-------|
+|n                                                                            |                                            |284                         |236                         |48                          |      |        |        |
+|Age (%)                                                                      |>= 0.5 and < 12                             |116 (40.8)                  |95 (40.3)                   |21 (43.8)                   |0.773 |        |0.0     |
+|                                                                             |>= 12 and < 19                              |168 (59.2)                  |141 (59.7)                  |27 (56.2)                   |      |        |        |
+|Country (%)                                                                  |Lesotho                                     |203 (71.5)                  |168 (71.2)                  |35 (72.9)                   |0.947 |        |0.0     |
+|                                                                             |Tanzania                                    |81 (28.5)                   |68 (28.8)                   |13 (27.1)                   |      |        |        |
+|ART core agent (%)                                                           |INSTI-based                                 |170 (59.9)                  |140 (59.3)                  |30 (62.5)                   |0.697 |        |0.0     |
+|                                                                             |NNRTI-based                                 |13 ( 4.6)                   |10 ( 4.2)                   |3 ( 6.2)                    |      |        |        |
+|                                                                             |PI-based                                    |101 (35.6)                  |86 (36.4)                   |15 (31.2)                   |      |        |        |
+|Sex (%)                                                                      |Female                                      |158 (55.6)                  |132 (55.9)                  |26 (54.2)                   |0.948 |        |0.0     |
+|                                                                             |Male                                        |126 (44.4)                  |104 (44.1)                  |22 (45.8)                   |      |        |        |
+|Viral load prior to enrolment (median [IQR])                                 |                                            |6600.00 [1465.25, 36225.00] |6685.00 [1372.50, 36225.00] |6160.00 [2910.00, 35845.50] |0.428 |nonnorm |0.0     |
+|Clinical WHO stage (%)                                                       |T1                                          |274 (96.5)                  |228 (96.6)                  |46 (95.8)                   |0.531 |        |0.0     |
+|                                                                             |T2                                          |5 ( 1.8)                    |4 ( 1.7)                    |1 ( 2.1)                    |      |        |        |
+|                                                                             |T3                                          |3 ( 1.1)                    |3 ( 1.3)                    |0 ( 0.0)                    |      |        |        |
+|                                                                             |T4                                          |2 ( 0.7)                    |1 ( 0.4)                    |1 ( 2.1)                    |      |        |        |
+|CD4 cell count (median [IQR])                                                |                                            |605.00 [425.00, 835.50]     |605.00 [425.00, 834.50]     |625.50 [436.25, 854.00]     |0.879 |nonnorm |15.8    |
+|Hepatitis B surface antigen (%)                                              |Negative                                    |218 (76.8)                  |183 (77.5)                  |35 (72.9)                   |0.754 |        |21.8    |
+|                                                                             |Positive                                    |4 ( 1.4)                    |3 ( 1.3)                    |1 ( 2.1)                    |      |        |        |
+|                                                                             |NA                                          |62 (21.8)                   |50 (21.2)                   |12 (25.0)                   |      |        |        |
+|Weight (median [IQR])                                                        |                                            |34.10 [21.98, 44.60]        |34.65 [22.23, 45.02]        |29.85 [21.65, 41.42]        |0.336 |nonnorm |0.0     |
+|Time since initiation of first documented ART regimen (years) (median [IQR]) |                                            |6.00 [3.00, 10.00]          |6.00 [3.00, 10.00]          |7.00 [4.00, 11.00]          |0.349 |nonnorm |0.0     |
+|Time since initiation of current ART regimen (years) (median [IQR])          |                                            |2.00 [1.00, 3.00]           |2.00 [1.00, 3.00]           |1.50 [1.00, 2.25]           |0.333 |nonnorm |0.0     |
+|Satisfaction with current regimen (self-reported) (%)                        |Neutral                                     |11 ( 3.9)                   |8 ( 3.4)                    |3 ( 6.2)                    |0.425 |        |1.4     |
+|                                                                             |Somewhat dissatisfied                       |29 (10.2)                   |26 (11.0)                   |3 ( 6.2)                    |      |        |        |
+|                                                                             |Somewhat satisfied                          |70 (24.6)                   |59 (25.0)                   |11 (22.9)                   |      |        |        |
+|                                                                             |Very dissatisfied                           |17 ( 6.0)                   |14 ( 5.9)                   |3 ( 6.2)                    |      |        |        |
+|                                                                             |Very satisfied                              |153 (53.9)                  |127 (53.8)                  |26 (54.2)                   |      |        |        |
+|                                                                             |NA                                          |4 ( 1.4)                    |2 ( 0.8)                    |2 ( 4.2)                    |      |        |        |
+|Missed 1 or more dose of ART over the past 4 weeks (self-reported) (%)       |No                                          |152 (53.5)                  |128 (54.2)                  |24 (50.0)                   |0.287 |        |1.4     |
+|                                                                             |Unknown                                     |33 (11.6)                   |26 (11.0)                   |7 (14.6)                    |      |        |        |
+|                                                                             |Yes                                         |95 (33.5)                   |80 (33.9)                   |15 (31.2)                   |      |        |        |
+|                                                                             |NA                                          |4 ( 1.4)                    |2 ( 0.8)                    |2 ( 4.2)                    |      |        |        |
+|No drug intake for 2 days or more (self-reported) (%)                        |No                                          |19 ( 6.7)                   |17 ( 7.2)                   |2 ( 4.2)                    |0.758 |        |66.5    |
+|                                                                             |Unknown                                     |3 ( 1.1)                    |2 ( 0.8)                    |1 ( 2.1)                    |      |        |        |
+|                                                                             |Yes                                         |73 (25.7)                   |61 (25.8)                   |12 (25.0)                   |      |        |        |
+|                                                                             |NA                                          |189 (66.5)                  |156 (66.1)                  |33 (68.8)                   |      |        |        |
+|Primary caregiver (%)                                                        |Both parents                                |35 (12.3)                   |26 (11.0)                   |9 (18.8)                    |0.387 |        |2.1     |
+|                                                                             |Father                                      |28 ( 9.9)                   |22 ( 9.3)                   |6 (12.5)                    |      |        |        |
+|                                                                             |Grandparent(s)                              |58 (20.4)                   |53 (22.5)                   |5 (10.4)                    |      |        |        |
+|                                                                             |Mother                                      |102 (35.9)                  |85 (36.0)                   |17 (35.4)                   |      |        |        |
+|                                                                             |Other                                       |55 (19.4)                   |45 (19.1)                   |10 (20.8)                   |      |        |        |
+|                                                                             |NA                                          |6 ( 2.1)                    |5 ( 2.1)                    |1 ( 2.1)                    |      |        |        |
+|Vital state of mother (%)                                                    |Alive                                       |174 (61.3)                  |141 (59.7)                  |33 (68.8)                   |0.317 |        |0.0     |
+|                                                                             |Dead                                        |85 (29.9)                   |75 (31.8)                   |10 (20.8)                   |      |        |        |
+|                                                                             |Unknown                                     |25 ( 8.8)                   |20 ( 8.5)                   |5 (10.4)                    |      |        |        |
+|Vital state of father (%)                                                    |Alive                                       |201 (70.8)                  |164 (69.5)                  |37 (77.1)                   |0.367 |        |0.0     |
+|                                                                             |Dead                                        |80 (28.2)                   |70 (29.7)                   |10 (20.8)                   |      |        |        |
+|                                                                             |Unknown                                     |3 ( 1.1)                    |2 ( 0.8)                    |1 ( 2.1)                    |      |        |        |
+|Travel time to healthcare facility (one way; minutes) (median [IQR])         |                                            |60.00 [30.00, 120.00]       |60.00 [30.00, 120.00]       |55.00 [20.00, 97.50]        |0.301 |nonnorm |0.0     |
+|Cost of travel to healthcare facility (one way; USD) (median [IQR])          |                                            |36.00 [16.00, 1050.00]      |36.00 [16.75, 1050.00]      |54.00 [16.00, 1125.00]      |0.996 |nonnorm |0.0     |
+|Main mode of travel to healthcare facility (%)                               |Bicycle                                     |1 ( 0.4)                    |0 ( 0.0)                    |1 ( 2.1)                    |0.063 |        |0.0     |
+|                                                                             |Private motorised vehicle (own or borrowed) |3 ( 1.1)                    |3 ( 1.3)                    |0 ( 0.0)                    |      |        |        |
+|                                                                             |Ride (horse/donkey)                         |1 ( 0.4)                    |1 ( 0.4)                    |0 ( 0.0)                    |      |        |        |
+|                                                                             |Taxi / public transport                     |275 (96.8)                  |230 (97.5)                  |45 (93.8)                   |      |        |        |
+|                                                                             |Walk                                        |4 ( 1.4)                    |2 ( 0.8)                    |2 ( 4.2)                    |      |        |        |
+|Site (%)                                                                     |Baylor Clinic Butha-Buthe                   |53 (18.7)                   |52 (22.0)                   |1 ( 2.1)                    |0.019 |        |0.0     |
+|                                                                             |Baylor Clinic Hlotse                        |43 (15.1)                   |35 (14.8)                   |8 (16.7)                    |      |        |        |
+|                                                                             |Baylor Clinic Maseru                        |34 (12.0)                   |27 (11.4)                   |7 (14.6)                    |      |        |        |
+|                                                                             |Baylor Clinic Mohale's Hoek                 |19 ( 6.7)                   |12 ( 5.1)                   |7 (14.6)                    |      |        |        |
+|                                                                             |Baylor Clinic Mokhotlong                    |36 (12.7)                   |26 (11.0)                   |10 (20.8)                   |      |        |        |
+|                                                                             |Ifakara One-Stop Clinic                     |38 (13.4)                   |32 (13.6)                   |6 (12.5)                    |      |        |        |
+|                                                                             |Mbagala Rangi Tatu Hospital                 |14 ( 4.9)                   |12 ( 5.1)                   |2 ( 4.2)                    |      |        |        |
+|                                                                             |Seboche Mission Hospital                    |18 ( 6.3)                   |16 ( 6.8)                   |2 ( 4.2)                    |      |        |        |
+|                                                                             |Temeke Regional Referral Hospital           |15 ( 5.3)                   |11 ( 4.7)                   |4 ( 8.3)                    |      |        |        |
+|                                                                             |Upendano Dispensary                         |14 ( 4.9)                   |13 ( 5.5)                   |1 ( 2.1)                    |      |        |        |
 
 ```r
 # # intervention arm only
@@ -1346,7 +753,6 @@ round(summary(df_ipw2$sw), 3)
 ```
 ####### We can see that the mean of stabilized weights (for both adherence definitions) is 1, while it is 1.9 for unstabilized weights. According to guidance, mean of stabilized weights should be around 1. For both unstabilized and stabilized weights, it seems there are no extreme weights. So, no truncation needed.
 
-
 ##### Check the distribution of the covariates by the treatment status on the pseudo population
 
 ```r
@@ -1555,7 +961,7 @@ PP_iv2 <- analysis %>%
               family = "binomial", data=.)
 # summ(PP_iv2, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
 ```
-
+\clearpage
 ##### Instrumental variable analysis, Adherence definition 1
 
 ```r
@@ -1844,7 +1250,7 @@ summ(PP_iv, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0")
 <sup></sup> Standard errors: Robust, type = HC0</td></tr></tfoot>
 </table>
 ###### As expected, massive uncertainty - and unsure if assumptions even valid
-
+\clearpage
 ##### Instrumental variable analysis, Adherence definition 2
 
 ```r
@@ -2134,7 +1540,7 @@ summ(PP_iv2, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0"
 </table>
 ###### As expected, massive uncertainty - and unsure if assumptions even valid
 
-
+\clearpage
 ### Results, Adherence definition 1
 
 ##### Naive PP analysis, unadjusted
@@ -2170,7 +1576,7 @@ summ(PP_iv2, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0"
 <tfoot><tr><td style="padding: 0; " colspan="100%">
 <sup></sup> Standard errors: MLE</td></tr></tfoot>
 </table>
-
+\clearpage
 ##### Naive PP analysis, adjusted
   <table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;border-bottom: 0;">
  <thead>
@@ -2237,7 +1643,7 @@ summ(PP_iv2, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0"
 <tfoot><tr><td style="padding: 0; " colspan="100%">
 <sup></sup> Standard errors: MLE</td></tr></tfoot>
 </table>
-
+\clearpage
 ##### Inverse probability weighting, stabilized weights
   <table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;border-bottom: 0;">
  <thead>
@@ -2271,7 +1677,7 @@ summ(PP_iv2, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0"
 <tfoot><tr><td style="padding: 0; " colspan="100%">
 <sup></sup> Standard errors: MLE</td></tr></tfoot>
 </table>
-
+\clearpage
 ##### Inverse probability weighting, unstabilized weights
   <table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;border-bottom: 0;">
  <thead>
@@ -2305,7 +1711,7 @@ summ(PP_iv2, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0"
 <tfoot><tr><td style="padding: 0; " colspan="100%">
 <sup></sup> Standard errors: MLE</td></tr></tfoot>
 </table>
-
+\clearpage
 
 ### Results, Adherence definition 2
 
@@ -2342,7 +1748,7 @@ summ(PP_iv2, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0"
 <tfoot><tr><td style="padding: 0; " colspan="100%">
 <sup></sup> Standard errors: MLE</td></tr></tfoot>
 </table>
-
+\clearpage
 ##### Naive PP analysis, adjusted
   <table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;border-bottom: 0;">
  <thead>
@@ -2409,7 +1815,7 @@ summ(PP_iv2, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0"
 <tfoot><tr><td style="padding: 0; " colspan="100%">
 <sup></sup> Standard errors: MLE</td></tr></tfoot>
 </table>
-
+\clearpage
 ##### Inverse probability weighting, stabilized weights
   <table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;border-bottom: 0;">
  <thead>
@@ -2443,7 +1849,7 @@ summ(PP_iv2, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0"
 <tfoot><tr><td style="padding: 0; " colspan="100%">
 <sup></sup> Standard errors: MLE</td></tr></tfoot>
 </table>
-
+\clearpage
 ##### Inverse probability weighting, unstabilized weights
   <table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;border-bottom: 0;">
  <thead>
@@ -2477,7 +1883,7 @@ summ(PP_iv2, exp = T, confint = T, model.info = F, model.fit = F, robust = "HC0"
 <tfoot><tr><td style="padding: 0; " colspan="100%">
 <sup></sup> Standard errors: MLE</td></tr></tfoot>
 </table>
-
+\clearpage
 ### Plot ORs, Adherence definition 1
 
 ```r
@@ -2491,7 +1897,7 @@ plot_summs(ITT, ITT_unadj, PP_adj, PP_unadj, PP_ipw_sw, PP_ipw_usw,
 ```
 
 ![](GIVE-MOVE_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
-
+\clearpage
 
 ### Plot ORs, Adherence definition 2
 
